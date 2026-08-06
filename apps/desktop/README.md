@@ -362,8 +362,9 @@ npm run desktop:dist
 ```
 apps/desktop/release/
 ├── win-unpacked/                # pack / dist 的解包目录，可直接运行 desktop_pet.exe
-├── desktop_pet Setup x.x.x.exe  # NSIS 安装包（dist）
-└── desktop_pet x.x.x.exe        # portable（dist）
+├── desktop_pet-Setup-x.x.x.exe       # NSIS 安装包（dist）
+├── desktop_pet-x.x.x-portable.exe    # portable 便携版（dist，双击即用）
+└── win-unpacked/desktop_pet.exe      # 解包调试（pack / dist 均有）
 ```
 
 ### 打包路径说明
@@ -407,7 +408,7 @@ apps/desktop/release/
 
 | 项 | 现状 | 后续计划 |
 |----|------|----------|
-| **目标产物** | `win.target`: **nsis** + **portable** | 保持双产物；portable 便于免安装试用 |
+| **目标产物** | **nsis** + **portable**（x64） | portable 固定解压目录 `desktop_pet-portable`；产物名 `*-portable.exe` |
 | **NSIS** | `oneClick: false`，可改安装目录 | 稳定后再考虑一键安装默认 |
 | **自动更新** | `electron-updater` + `publish.provider: github`（`moon-stack-OAo/desktop_pet`） | 需 GitHub Release 资产命名与 builder 一致；未 TAG 前不发正式更新通道 |
 | **代码签名** | **`signAndEditExecutable: false`**，**当前无 Authenticode 签名** | 取得证书后：开开发人员模式 → 去掉该开关 → 配置 `certificateSubjectName` / CI 密钥；未签名时 SmartScreen 可能告警属预期 |

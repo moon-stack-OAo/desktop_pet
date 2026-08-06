@@ -93,15 +93,28 @@
     ],
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
       ],
       "icon": "build/icon.ico",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "executableName": "desktop_pet"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}",
+      "unpackDirName": "desktop_pet-portable",
+      "requestExecutionLevel": "user"
     },
     "publish": [
       {

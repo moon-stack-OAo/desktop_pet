@@ -55,6 +55,7 @@
 
 - 沙箱 preload 内联 IPC 通道常量：禁止 `require` 项目内模块，修复 `petAPI` 注入失败导致空白窗 / 右下角无宠物
 - 打包/启动体验：穿透开启时托盘气泡提示；单击托盘显示窗口；打包态强制 `loadFile` 与加载失败日志
+- portable 配置：固定 `unpackDirName`、产物名 `*-portable.exe`、x64；portable 跳过启动自动更新检查
 
 ### 功能与性能
 

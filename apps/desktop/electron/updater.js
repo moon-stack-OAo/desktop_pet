@@ -267,6 +267,11 @@ function scheduleStartupCheck() {
     log.info('[updater] 开发态跳过启动检查');
     return;
   }
+  // portable 便携版更新通道有限，启动不自动检查（仍可手动）
+  if (process.env.PORTABLE_EXECUTABLE_DIR || process.env.PORTABLE_EXECUTABLE_FILE) {
+    log.info('[updater] portable 模式跳过启动检查');
+    return;
+  }
   if (startupCheckScheduled) {
     return;
   }
