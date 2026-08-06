@@ -1,6 +1,8 @@
 /**
  * 应用菜单行为项单一源（托盘原生菜单 + 渲染层右键共用文案）
- * 纯数据，主进程 CJS / 渲染层均可消费
+ * 主进程：require('../shared/menu-model')
+ * 渲染层：import menuModel from '...' 后取 .BEHAVIOR_MENU_ITEMS
+ * （Vite 对 CJS 命名导入支持不完整，请用 default import）
  */
 
 'use strict';
@@ -14,7 +16,6 @@
 
 /**
  * 喂食 / 摸摸 / 玩耍 / 休息 / 走动
- * 托盘与右键顺序、文案须一致
  * @type {readonly BehaviorMenuItem[]}
  */
 const BEHAVIOR_MENU_ITEMS = Object.freeze([
