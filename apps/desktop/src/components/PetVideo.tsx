@@ -37,7 +37,6 @@ const WARM_CAP = 48;
 function warmVideoUrl(url: string): void {
   if (!url || warmedUrls.has(url)) return;
   if (warmedUrls.size >= WARM_CAP) {
-    // 简单 FIFO：清一半
     const half = Math.floor(WARM_CAP / 2);
     let i = 0;
     for (const u of warmedUrls) {
@@ -49,6 +48,7 @@ function warmVideoUrl(url: string): void {
   try {
     const v = document.createElement('video');
     v.muted = true;
+    v.defaultMuted = true;
     v.preload = 'auto';
     v.playsInline = true;
     v.src = url;
@@ -60,14 +60,21 @@ function warmVideoUrl(url: string): void {
         /* ignore */
       }
     };
-    v.addEventListener('canplaythrough', () => {
-      warmedUrls.add(url);
-      cleanup();
-    }, {once: true});
-    v.addEventListener('error', () => {
-      cleanup();
-    }, {once: true});
-    // 超时也标记，避免反复失败打爆
+    v.addEventListener(
+      'canplaythrough',
+      () => {
+        warmedUrls.add(url);
+        cleanup();
+      },
+      {once: true},
+    );
+    v.addEventListener(
+      'error',
+      () => {
+        cleanup();
+      },
+      {once: true},
+    );
     window.setTimeout(() => {
       warmedUrls.add(url);
       cleanup();
@@ -79,8 +86,72 @@ function warmVideoUrl(url: string): void {
 }
 
 /**
+ * 强制静音属性（Chromium autoplay 策略要求 muted + 属性位）
+ */
+function forceMute(video: HTMLVideoElement): void {
+  video.muted = true;
+  video.defaultMuted = true;
+  video.volume = 0;
+  video.setAttribute('muted', '');
+  video.setAttribute('playsinline', '');
+  video.setAttribute('webkit-playsinline', '');
+}
+
+/**
+ * 尽量播放；失败时仍 seek 到首帧，避免透明 WebM 暂停时完全看不见
+ */
+async function tryPlay(
+  video: HTMLVideoElement,
+  onPlaying?: () => void,
+  onAutoplayBlocked?: () => void,
+): Promise<void> {
+  forceMute(video);
+  try {
+    await video.play();
+    onPlaying?.();
+    return;
+  } catch (err) {
+    logWarn('[renderer] autoplay 失败，尝试首帧兜底', err);
+  }
+
+  // 首帧兜底：透明窗暂停时若无画面会像「没有宠物」
+  try {
+    if (video.readyState >= 1) {
+      video.currentTime = 0;
+    } else {
+      await new Promise<void>((resolve) => {
+        const done = () => {
+          video.removeEventListener('loadeddata', done);
+          resolve();
+        };
+        video.addEventListener('loadeddata', done, {once: true});
+        window.setTimeout(done, 1500);
+      });
+      try {
+        video.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+
+  // 再试一次 play（部分环境 loadeddata 后可过）
+  forceMute(video);
+  try {
+    await video.play();
+    onPlaying?.();
+    return;
+  } catch {
+    onAutoplayBlocked?.();
+  }
+}
+
+/**
  * 按 FSM clip 切换视频：src 变化时优先复用已 warm 缓存；ended → onEnded。
  * WebM 解码失败时 onDecodeError 提示（B-805）。
+ * 打包后 autoplay 常被拦截：强制 muted + 首帧兜底，避免空白透明窗。
  */
 export default function PetVideo({
   src,
@@ -98,12 +169,15 @@ export default function PetVideo({
   onEndedRef.current = onEnded;
   const onDecodeErrorRef = useRef(onDecodeError);
   onDecodeErrorRef.current = onDecodeError;
+  const onPlayingRef = useRef(onPlaying);
+  onPlayingRef.current = onPlaying;
+  const onAutoplayBlockedRef = useRef(onAutoplayBlocked);
+  onAutoplayBlockedRef.current = onAutoplayBlocked;
 
   // B-902：空闲预加载同宠其它 clip
   useEffect(() => {
     if (!preloadUrls?.length) return;
     const list = preloadUrls.filter((u) => u && u !== src).slice(0, 12);
-    // 延后到下一帧，避免与当前 clip 抢带宽
     const t = window.setTimeout(() => {
       for (const u of list) warmVideoUrl(u);
     }, 400);
@@ -115,34 +189,54 @@ export default function PetVideo({
     const video = videoRef.current;
     if (!video || !src) return;
 
+    let cancelled = false;
     const shouldReload = appliedUrlRef.current !== src;
     appliedUrlRef.current = src;
 
+    forceMute(video);
     video.loop = loop === true;
-    video.muted = true;
+
+    const runPlay = () => {
+      if (cancelled) return;
+      void tryPlay(
+        video,
+        () => {
+          if (!cancelled) onPlayingRef.current?.();
+        },
+        () => {
+          if (!cancelled) onAutoplayBlockedRef.current?.();
+        },
+      );
+    };
 
     if (shouldReload) {
-      // 已 warm 过仍设 src；浏览器可走磁盘/内存缓存，减少裸 load 成本
       video.src = src;
       video.load();
       warmVideoUrl(src);
       logInfo('[renderer] 切换 clip', clipName || src);
-    } else {
-      video.loop = loop === true;
+      // 等有数据再 play，降低 NotAllowed / 空 play 失败
+      const onReady = () => {
+        video.removeEventListener('canplay', onReady);
+        video.removeEventListener('loadeddata', onReady);
+        runPlay();
+      };
+      video.addEventListener('canplay', onReady, {once: true});
+      video.addEventListener('loadeddata', onReady, {once: true});
+      // 超时仍尝试（慢盘 / 大 webm）
+      const timer = window.setTimeout(runPlay, 1200);
+      return () => {
+        cancelled = true;
+        window.clearTimeout(timer);
+        video.removeEventListener('canplay', onReady);
+        video.removeEventListener('loadeddata', onReady);
+      };
     }
 
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.then === 'function') {
-      playPromise
-        .then(() => onPlaying?.())
-        .catch((err: unknown) => {
-          logWarn('[renderer] autoplay 失败，等待用户交互', err);
-          onAutoplayBlocked?.();
-        });
-    } else {
-      onPlaying?.();
-    }
-  }, [src, loop, clipName, onAutoplayBlocked, onPlaying]);
+    runPlay();
+    return () => {
+      cancelled = true;
+    };
+  }, [src, loop, clipName]);
 
   // ended：非 loop 时通知 FSM
   useEffect(() => {
@@ -167,7 +261,6 @@ export default function PetVideo({
       const code = video.error?.code;
       const mediaMsg = video.error?.message || '';
       logWarn('[renderer] 视频解码/加载失败', clipName || src, code, mediaMsg);
-      // MEDIA_ERR_DECODE=3, SRC_NOT_SUPPORTED=4
       let reason = '视频无法播放';
       if (code === 3) {
         reason = '视频解码失败（WebM/透明轨可能不兼容）';
@@ -185,22 +278,28 @@ export default function PetVideo({
     return () => video.removeEventListener('error', handleError);
   }, [src, clipName]);
 
-  /** 点击舞台时重试播放（autoplay 策略兜底） */
+  /** 任意用户手势重试播放（含右键菜单打开前的点击） */
   useEffect(() => {
-    const onClick = () => {
+    const retry = () => {
       const video = videoRef.current;
-      if (video?.paused && video.src) {
-        video
-          .play()
-          .then(() => onPlaying?.())
-          .catch(() => {
-            /* 仍失败则保持提示 */
-          });
-      }
+      if (!video?.src) return;
+      if (!video.paused && !video.ended) return;
+      forceMute(video);
+      void video
+        .play()
+        .then(() => onPlayingRef.current?.())
+        .catch(() => {
+          /* 仍失败则保持「点击播放」提示 */
+        });
     };
-    document.body.addEventListener('click', onClick);
-    return () => document.body.removeEventListener('click', onClick);
-  }, [onPlaying]);
+    // 捕获阶段：穿透到 body 的 pointer 事件也能触发
+    document.addEventListener('pointerdown', retry, true);
+    document.addEventListener('keydown', retry, true);
+    return () => {
+      document.removeEventListener('pointerdown', retry, true);
+      document.removeEventListener('keydown', retry, true);
+    };
+  }, []);
 
   return (
     <video

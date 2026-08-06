@@ -24,6 +24,17 @@ const { createTray, rebuildTrayMenu } = require('./tray-menu');
 const { registerIpc } = require('./ipc');
 const { IPC } = require('../shared/ipc-channels');
 
+// 桌宠视频需静音自动播放；打包后 Chromium 默认策略易拦截 → 透明窗像「没有宠物」
+// 须在 app ready 之前
+try {
+  app.commandLine.appendSwitch(
+    'autoplay-policy',
+    'no-user-gesture-required',
+  );
+} catch {
+  /* ignore */
+}
+
 // 须在 app ready 之前注册特权
 registerPetAssetSchemePrivileges();
 
