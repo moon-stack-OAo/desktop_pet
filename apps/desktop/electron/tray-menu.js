@@ -184,6 +184,31 @@ function createTrayImage() {
 }
 
 /**
+ * 启动时提示点击穿透已开（打包后无任务栏图标，易误以为无响应）
+ * @param {import('electron').Tray} tray
+ * @param {boolean} ignoreMouse
+ */
+function notifyIgnoreMouseIfNeeded(tray, ignoreMouse) {
+  if (!ignoreMouse || !tray || tray.isDestroyed()) return;
+  try {
+    // Windows：气泡；其他平台仅 tooltip 已够
+    if (process.platform === 'win32' && typeof tray.displayBalloon === 'function') {
+      tray.displayBalloon({
+        title: 'desktop_pet',
+        content:
+          '点击穿透已开启，窗口点不到。请右键本托盘图标，取消「点击穿透」。',
+        iconType: 'info',
+      });
+    }
+  } catch (err) {
+    log.warn('[pet] 托盘气泡失败:', formatErr(err));
+  }
+  log.warn(
+    '[window] 已恢复点击穿透：窗口不可点；请托盘取消「点击穿透」',
+  );
+}
+
+/**
  * @param {TrayHost} host
  */
 function createTray(host) {
@@ -197,11 +222,27 @@ function createTray(host) {
     );
     tray.setContextMenu(Menu.buildFromTemplate(buildAppMenuTemplate(host)));
     tray.on('double-click', () => {
-      host.getMainWindow()?.show();
+      const win = host.getMainWindow();
+      if (!win || win.isDestroyed()) return;
+      if (win.isVisible()) win.focus();
+      else win.show();
     });
+    tray.on('click', () => {
+      // 单击也尝试显示/聚焦，避免「只有穿透时完全摸不到」
+      const win = host.getMainWindow();
+      if (!win || win.isDestroyed()) return;
+      win.show();
+      win.focus();
+    });
+    notifyIgnoreMouseIfNeeded(tray, host.getIgnoreMouse());
   } catch (err) {
-    log.warn('[pet] 托盘创建失败（可忽略）:', formatErr(err));
+    log.warn('[pet] 托盘创建失败:', formatErr(err));
     host.setTray(null);
+    // 无托盘时强制关闭穿透，否则用户无法操作
+    if (host.getIgnoreMouse()) {
+      log.warn('[pet] 托盘不可用，已关闭点击穿透以免无法操作');
+      host.applyIgnoreMouse(false);
+    }
   }
 }
 
@@ -212,4 +253,5 @@ module.exports = {
   resolveAppIconPath,
   createTrayImage,
   createTray,
+  notifyIgnoreMouseIfNeeded,
 };

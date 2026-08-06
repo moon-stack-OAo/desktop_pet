@@ -5,7 +5,7 @@
 'use strict';
 
 const path = require('path');
-const { BrowserWindow, screen } = require('electron');
+const { app, BrowserWindow, screen } = require('electron');
 const log = require('./logger');
 const { writePetPrefs } = require('./prefs');
 const { IPC } = require('../shared/ipc-channels');
@@ -131,9 +131,17 @@ function createWindow(petPayload, host) {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.setPosition(x, y);
 
+  // 打包态强制 loadFile，避免误设 NODE_ENV=development 去连 Vite
+  let isPackaged = false;
+  try {
+    isPackaged = app.isPackaged === true;
+  } catch {
+    isPackaged = false;
+  }
   const isDev =
-    process.env.ELECTRON_DEV === '1' ||
-    process.env.NODE_ENV === 'development';
+    !isPackaged &&
+    (process.env.ELECTRON_DEV === '1' ||
+      process.env.NODE_ENV === 'development');
   const devServerUrl =
     process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
@@ -143,8 +151,15 @@ function createWindow(petPayload, host) {
       mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist-renderer/index.html'));
+    const htmlPath = path.join(__dirname, '../dist-renderer/index.html');
+    mainWindow.loadFile(htmlPath).catch((err) => {
+      log.error('[window] loadFile 失败:', htmlPath, formatErr(err));
+    });
   }
+
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    log.error('[window] 页面加载失败:', code, desc, url);
+  });
 
   if (ignoreMouseEvents) {
     mainWindow.setIgnoreMouseEvents(true, { forward: true });

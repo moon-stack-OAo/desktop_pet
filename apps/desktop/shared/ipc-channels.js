@@ -1,6 +1,7 @@
 /**
- * IPC 通道名单一源（主进程 / preload 共用）
- * 运行时字符串须保持稳定，勿随意改名
+ * IPC 通道名单一源（主进程 / 非沙箱脚本共用）
+ * 运行时字符串须保持稳定，勿随意改名。
+ * 注意：preload 在 sandbox=true 下不能 require 本文件，通道字面量已内联在 electron/preload.js。
  */
 
 'use strict';

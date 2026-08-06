@@ -1,24 +1,46 @@
 /**
  * 预加载脚本：向渲染进程暴露安全 API
+ *
+ * 注意：webPreferences.sandbox=true 时，preload **只能** require('electron') 等受限模块，
+ * 不能 require 项目内相对路径（如 ../shared/ipc-channels），否则 petAPI 注入失败 → 空白窗。
+ * 通道名须与 shared/ipc-channels.js 保持一致。
  */
 const { contextBridge, ipcRenderer } = require('electron');
-const { IPC } = require('../shared/ipc-channels');
+
+/** @type {typeof import('../shared/ipc-channels').IPC} */
+const IPC = {
+  PET_GET: 'pet:get',
+  PET_GET_CATALOG: 'pet:get-catalog',
+  PET_SWITCH: 'pet:switch',
+  PET_READY: 'pet:ready',
+  PET_REQUEST_BEHAVIOR: 'pet:request-behavior',
+  PET_TOGGLE_MUTE: 'pet:toggle-mute',
+  AI_CHAT: 'ai:chat',
+  AI_GET_SETTINGS: 'ai:get-settings',
+  AI_SAVE_SETTINGS: 'ai:save-settings',
+  APP_QUIT: 'app:quit',
+  WINDOW_SET_IGNORE_MOUSE: 'window:set-ignore-mouse',
+  WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse',
+  WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
+  UPDATE_GET_STATE: 'update:get-state',
+  UPDATE_CHECK: 'update:check',
+  UPDATE_DOWNLOAD: 'update:download',
+  UPDATE_INSTALL: 'update:install',
+  UPDATE_IGNORE: 'update:ignore',
+  UPDATE_SET_CHECK_ON_START: 'update:set-check-on-start',
+  UPDATE_GET_PREFS: 'update:get-prefs',
+  UPDATE_STATUS: 'update:status',
+};
 
 contextBridge.exposeInMainWorld('petAPI', {
-  /** 主动拉取宠物配置 */
   /** @param {string} [petId] */
   getPet: (petId) => ipcRenderer.invoke(IPC.PET_GET, petId),
 
-  /** 宠物目录与当前 id */
   getCatalog: () => ipcRenderer.invoke(IPC.PET_GET_CATALOG),
 
-  /**
-   * 切换宠物；成功时主进程会再推送 pet:ready
-   * @param {string} petId
-   */
+  /** @param {string} petId */
   switchPet: (petId) => ipcRenderer.invoke(IPC.PET_SWITCH, petId),
 
-  /** 主进程推送就绪事件；返回取消订阅函数 */
   /** @param {(payload: import('../shared/pet-payload').PetPayload) => void} callback */
   onReady: (callback) => {
     /** @param {Electron.IpcRendererEvent} _event @param {import('../shared/pet-payload').PetPayload} payload */
@@ -27,10 +49,7 @@ contextBridge.exposeInMainWorld('petAPI', {
     return () => ipcRenderer.removeListener(IPC.PET_READY, handler);
   },
 
-  /**
-   * 主进程（托盘等）请求行为；返回取消订阅
-   * @param {(behavior: string) => void} callback
-   */
+  /** @param {(behavior: string) => void} callback */
   onBehaviorRequest: (callback) => {
     /** @param {Electron.IpcRendererEvent} _event @param {unknown} behavior */
     const handler = (_event, behavior) => {
@@ -42,10 +61,7 @@ contextBridge.exposeInMainWorld('petAPI', {
     return () => ipcRenderer.removeListener(IPC.PET_REQUEST_BEHAVIOR, handler);
   },
 
-  /**
-   * 主进程菜单请求切换静音；返回取消订阅
-   * @param {() => void} callback
-   */
+  /** @param {() => void} callback */
   onToggleMute: (callback) => {
     const handler = () => callback();
     ipcRenderer.on(IPC.PET_TOGGLE_MUTE, handler);
@@ -53,7 +69,6 @@ contextBridge.exposeInMainWorld('petAPI', {
   },
 
   /**
-   * AI 对话：主进程使用当前宠物 persona；可选传 vitals
    * @param {string} message
    * @param {import('../shared/pet-payload').PetChatContext} [context]
    * @returns {Promise<import('../shared/pet-payload').PetChatResult>}
@@ -64,35 +79,22 @@ contextBridge.exposeInMainWorld('petAPI', {
       vitals: context && context.vitals ? context.vitals : undefined,
     }),
 
-  /** AI 设置（无完整 key，仅 hasKey / keyHint） */
   getAiSettings: () => ipcRenderer.invoke(IPC.AI_GET_SETTINGS),
 
-  /**
-   * 保存 AI 设置
-   * @param {import('../shared/pet-payload').AiSettingsSaveInput} [partial]
-   */
+  /** @param {import('../shared/pet-payload').AiSettingsSaveInput} [partial] */
   saveAiSettings: (partial) =>
     ipcRenderer.invoke(IPC.AI_SAVE_SETTINGS, partial || {}),
 
-  /** 退出应用 */
   quit: () => ipcRenderer.send(IPC.APP_QUIT),
 
-  /**
-   * 设置窗口点击穿透（true=穿透到下方窗口）
-   * 开启后宠物窗收不到点击，须用托盘「点击穿透」关闭
-   * @param {boolean} ignore
-   */
+  /** @param {boolean} ignore */
   setIgnoreMouse: (ignore) => {
     ipcRenderer.send(IPC.WINDOW_SET_IGNORE_MOUSE, !!ignore);
   },
 
-  /** 当前是否点击穿透 */
   getIgnoreMouse: () => ipcRenderer.invoke(IPC.WINDOW_GET_IGNORE_MOUSE),
 
-  /**
-   * 主进程通知穿透状态变化（托盘切换等）；返回取消订阅
-   * @param {(ignore: boolean) => void} callback
-   */
+  /** @param {(ignore: boolean) => void} callback */
   onIgnoreMouseChanged: (callback) => {
     /** @param {Electron.IpcRendererEvent} _event @param {unknown} ignore */
     const handler = (_event, ignore) => callback(!!ignore);
@@ -101,7 +103,6 @@ contextBridge.exposeInMainWorld('petAPI', {
       ipcRenderer.removeListener(IPC.WINDOW_IGNORE_MOUSE_CHANGED, handler);
   },
 
-  // —— 自动更新 ——
   getUpdateState: () => ipcRenderer.invoke(IPC.UPDATE_GET_STATE),
   /** @param {{ manual?: boolean }} [opts] */
   checkUpdate: (opts) =>
@@ -115,7 +116,6 @@ contextBridge.exposeInMainWorld('petAPI', {
     ipcRenderer.invoke(IPC.UPDATE_SET_CHECK_ON_START, enabled),
   getUpdatePrefs: () => ipcRenderer.invoke(IPC.UPDATE_GET_PREFS),
   /**
-   * 订阅更新状态；返回取消订阅
    * @param {(payload: import('../shared/pet-payload').UpdateStatusPayload) => void} callback
    */
   onUpdateStatus: (callback) => {

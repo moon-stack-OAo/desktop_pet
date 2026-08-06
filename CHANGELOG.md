@@ -14,9 +14,10 @@
 
 ### 文档
 
+- 根 `README.md` 按工程优化结果重写：结构 / 脚本（test·lint·smoke）/ CI / AI 设置优先级 / 架构要点 / 去掉失效 TODO 链接
 - 更新 `pets/SPRITESHEET_TEMPLATE.md`：反映 atlas→spritesheet 现状、帧约定、推荐模板与校验流程
 - 优化全部 12 只宠物 `pets/*/persona.md`：统一中文结构（身份/性格/说话风格/禁忌），区分角色辨识度
-- 根 `README.md` 补齐：项目简介、monorepo 结构、快速启动、常用脚本，并链到 `apps/desktop/README`（B-101）
+- 根 README 初版补齐：项目简介、monorepo、快速启动（B-101）
 - 修正 `apps/desktop/README` 示例路径与仓库一致（B-102）
 - 用户数据文档：prefs 路径、localStorage key、vitals/muted schema 版本与迁移行为（B-604）
 - 宠物加载策略说明：校验失败拒载 / 降级 / 回退 guga、payload 缓存与失效（B-601 / B-602）
@@ -49,6 +50,11 @@
   - `shared/menu-model`：喂食 / 摸摸等行为项单源；托盘与右键共用（B-501）
   - 拆 `usePetMenu` / `useChatSession` / `useIgnoreMouse` 等 hooks（B-502 – B-504）
   - `useHungerAutoBehavior`：vitals → 自动行为从 Context 抽 hook（B-505）
+
+### 修复
+
+- 沙箱 preload 内联 IPC 通道常量：禁止 `require` 项目内模块，修复 `petAPI` 注入失败导致空白窗 / 右下角无宠物
+- 打包/启动体验：穿透开启时托盘气泡提示；单击托盘显示窗口；打包态强制 `loadFile` 与加载失败日志
 
 ### 功能与性能
 

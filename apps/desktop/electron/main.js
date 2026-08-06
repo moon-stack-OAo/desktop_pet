@@ -188,9 +188,7 @@ app.whenReady().then(async () => {
     }
     createWindow(payload, buildHost());
     createTray(buildHost());
-    if (ignoreMouseEvents) {
-      log.info('[window] 已从 prefs 恢复点击穿透');
-    }
+    // 点击穿透 + skipTaskbar：看起来像「启动无响应」——托盘气泡已在 createTray 中提示
   } catch (err) {
     log.error('[pet] 加载失败:', err);
     app.quit();
