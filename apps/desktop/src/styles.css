@@ -1,0 +1,824 @@
+/* 全透明舞台，仅显示视频（含 webm 透明通道） */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.stage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  /* 整窗可拖拽 */
+  -webkit-app-region: drag;
+  cursor: grab;
+  position: relative;
+}
+
+.pet-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  /* 视频本身不拦截拖拽 */
+  -webkit-app-region: drag;
+}
+
+/* 精灵表：居中、透明底、object-fit contain */
+.pet-spritesheet {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-app-region: drag;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pet-spritesheet--canvas {
+  object-fit: contain;
+  image-rendering: auto;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+}
+
+.pet-spritesheet--static {
+  width: 100%;
+  height: 100%;
+}
+
+.pet-spritesheet-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: transparent;
+  -webkit-user-drag: none;
+  /* 单帧占位：轻微上下浮动 */
+  animation: pet-float 2.4s ease-in-out infinite;
+}
+
+@keyframes pet-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* 状态提示：小窗居中偏上，字号紧凑、可折行 */
+.status {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  max-width: calc(100% - 12px);
+  padding: 4px 8px;
+  font: 10px/1.3 system-ui, 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(0, 0, 0, 0.48);
+  border-radius: 5px;
+  text-align: center;
+  word-break: break-word;
+  box-sizing: border-box;
+  -webkit-app-region: no-drag;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 名称很淡，不挡宠物 */
+.badge {
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  padding: 1px 5px;
+  font: 10px/1.3 system-ui, sans-serif;
+  color: rgba(255, 255, 255, 0.35);
+  background: transparent;
+  border-radius: 4px;
+  -webkit-app-region: no-drag;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 自定义右键菜单：半透明深色、可点击（小窗内自适应贴边） */
+.context-menu {
+  position: fixed;
+  z-index: 100;
+  min-width: 96px;
+  max-width: min(148px, calc(100vw - 8px));
+  max-height: calc(100vh - 8px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 3px;
+  margin: 0;
+  border-radius: 7px;
+  background: rgba(28, 28, 32, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  font: 10px/1.3 system-ui, 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  box-sizing: border-box;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-menu-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.context-menu-item:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.context-menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.context-menu-item--disabled,
+.context-menu-item:disabled {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
+
+.context-menu-item--disabled:hover,
+.context-menu-item:disabled:hover {
+  background: transparent;
+}
+
+/* 贴窗口底边的养成条：尽量矮，少挡躯干 */
+.vitals-bar {
+  position: fixed;
+  left: 4px;
+  right: 4px;
+  bottom: 2px;
+  width: auto;
+  max-width: none;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 4px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.26);
+  pointer-events: none;
+  -webkit-app-region: no-drag;
+  z-index: 5;
+  opacity: 0.72;
+}
+
+.vitals-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  height: 6px;
+}
+
+.vitals-label {
+  flex: 0 0 auto;
+  width: 9px;
+  font-size: 7px;
+  line-height: 1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.vitals-track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.vitals-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width 0.35s ease;
+}
+
+.vitals-fill--hunger {
+  background: rgba(255, 180, 90, 0.85);
+}
+
+.vitals-fill--mood {
+  background: rgba(255, 120, 150, 0.8);
+}
+
+/* 宠物主体略留底边，只给极矮状态条腾位 */
+.stage > .pet-video,
+.stage > .pet-spritesheet {
+  height: calc(100% - 14px);
+  margin-bottom: 14px;
+}
+
+/* 对话面板：贴窗内可滚动，不超出 160px 级小窗 */
+.chat-panel {
+  position: fixed;
+  left: 3px;
+  right: 3px;
+  top: 3px;
+  bottom: 16px; /* 避开底边 vitals */
+  transform: none;
+  width: auto;
+  max-width: none;
+  max-height: none;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  border-radius: 8px;
+  background: rgba(24, 24, 30, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  font: 10px/1.35 system-ui, 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.chat-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 4px 3px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 0 0 auto;
+  min-height: 22px;
+  box-sizing: border-box;
+}
+
+.chat-panel-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-mode-badge {
+  flex: 0 0 auto;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-app-region: no-drag;
+}
+
+.chat-mode-badge--local {
+  background: rgba(120, 180, 120, 0.2);
+  color: rgba(180, 230, 180, 0.95);
+  border-color: rgba(140, 200, 140, 0.3);
+}
+
+.chat-mode-badge--cloud {
+  background: rgba(100, 140, 255, 0.22);
+  color: rgba(180, 200, 255, 0.98);
+  border-color: rgba(140, 170, 255, 0.35);
+}
+
+.chat-msg-source {
+  display: inline-block;
+  margin-right: 4px;
+  font-size: 8px;
+  line-height: 1;
+  padding: 1px 3px;
+  border-radius: 3px;
+  vertical-align: middle;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.chat-msg-source--local {
+  background: rgba(120, 180, 120, 0.18);
+  color: rgba(180, 230, 180, 0.9);
+}
+
+.chat-msg-source--cloud {
+  background: rgba(100, 140, 255, 0.2);
+  color: rgba(180, 200, 255, 0.95);
+}
+
+.chat-panel-settings {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.chat-panel-settings:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.chat-panel-close {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.chat-panel-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+/* AI 设置面板（与 chat-panel 同风格） */
+.ai-settings-panel {
+  position: fixed;
+  left: 3px;
+  right: 3px;
+  top: 3px;
+  bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  z-index: 55;
+  border-radius: 8px;
+  background: rgba(24, 24, 30, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  font: 10px/1.35 system-ui, 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ai-settings-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 3px 4px 3px 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 0 0 auto;
+  min-height: 22px;
+}
+
+.ai-settings-title {
+  flex: 1 1 auto;
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.ai-settings-close {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.ai-settings-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.ai-settings-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+  box-sizing: border-box;
+}
+
+.ai-settings-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.35;
+}
+
+.ai-settings-hint {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.35;
+}
+
+.ai-settings-hint--warn {
+  color: rgba(255, 200, 120, 0.9);
+}
+
+.ai-settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ai-settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.ai-settings-input {
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+  font: inherit;
+  font-size: 10px;
+  outline: none;
+  -webkit-app-region: no-drag;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.ai-settings-input:focus {
+  border-color: rgba(140, 180, 255, 0.45);
+}
+
+.ai-settings-input:disabled {
+  opacity: 0.6;
+}
+
+.ai-settings-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.ai-settings-btn {
+  flex: 1 1 auto;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.ai-settings-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.ai-settings-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.ai-settings-btn--primary {
+  border: none;
+  background: rgba(90, 140, 255, 0.55);
+  color: #fff;
+}
+
+.ai-settings-btn--primary:hover:not(:disabled) {
+  background: rgba(90, 140, 255, 0.75);
+}
+
+.ai-settings-status {
+  font-size: 9px;
+  color: rgba(180, 220, 180, 0.95);
+}
+
+/* 列表占满中间区域，min-height:0 才能在 flex 内滚动 */
+.chat-panel-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+.chat-panel-hint {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  padding: 6px 2px;
+}
+
+.chat-bubble {
+  max-width: 94%;
+  padding: 3px 6px;
+  border-radius: 6px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.chat-bubble--user {
+  align-self: flex-end;
+  background: rgba(90, 140, 255, 0.35);
+  border: 1px solid rgba(140, 180, 255, 0.25);
+}
+
+.chat-bubble--pet {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chat-bubble--busy {
+  opacity: 0.55;
+  letter-spacing: 2px;
+}
+
+.chat-panel-form {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+  box-sizing: border-box;
+}
+
+.chat-panel-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.28);
+  color: rgba(255, 255, 255, 0.95);
+  font: inherit;
+  font-size: 10px;
+  outline: none;
+  -webkit-app-region: no-drag;
+}
+
+.chat-panel-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.chat-panel-input:focus {
+  border-color: rgba(140, 180, 255, 0.45);
+}
+
+.chat-panel-input:disabled {
+  opacity: 0.6;
+}
+
+.chat-panel-send {
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 5px;
+  background: rgba(90, 140, 255, 0.55);
+  color: #fff;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.chat-panel-send:hover:not(:disabled) {
+  background: rgba(90, 140, 255, 0.75);
+}
+
+.chat-panel-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* 更新对话框：严格限制在窗体内，notes 可滚 */
+.update-dialog {
+  position: fixed;
+  left: 3px;
+  right: 3px;
+  top: 3px;
+  bottom: auto;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 6px 6px;
+  border-radius: 7px;
+  background: rgba(24, 24, 30, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-app-region: no-drag;
+  pointer-events: auto;
+  font: 10px/1.3 system-ui, 'Segoe UI', sans-serif;
+  color: rgba(255, 255, 255, 0.92);
+  max-height: calc(100vh - 6px);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.update-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.update-dialog-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.update-dialog-close {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.update-dialog-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.update-dialog-body {
+  flex: 0 1 auto;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.8);
+  word-break: break-word;
+  min-width: 0;
+}
+
+.update-dialog-notes {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(40px, 28vh);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.update-dialog-progress {
+  flex: 0 0 auto;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.update-dialog-progress-fill {
+  height: 100%;
+  background: rgba(90, 140, 255, 0.85);
+  transition: width 0.15s ease;
+}
+
+.update-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+
+.update-btn {
+  flex: 1 1 calc(50% - 3px);
+  min-width: 0;
+  height: 20px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font: inherit;
+  font-size: 9px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.update-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.update-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.update-btn--primary {
+  background: rgba(90, 140, 255, 0.55);
+}
+
+.update-btn--primary:hover:not(:disabled) {
+  background: rgba(90, 140, 255, 0.75);
+}

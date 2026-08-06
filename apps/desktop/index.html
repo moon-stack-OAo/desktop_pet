@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <!--
+      最小 CSP：兼顾 Vite 开发（http://localhost:5173 + HMR ws）与生产（file 加载 dist-renderer）。
+      pet-asset: 用于本地视频/图片/音效。
+      style-src 'unsafe-inline'：React 使用 style={{}} 写元素 style 属性，无 nonce 时暂无替代。
+      不使用 script-src 'unsafe-inline' / 'unsafe-eval'。
+    -->
+    <meta
+      content="default-src 'self'; script-src 'self' http://localhost:5173; style-src 'self' 'unsafe-inline'; img-src 'self' data: pet-asset:; media-src 'self' blob: pet-asset:; connect-src 'self' http://localhost:5173 ws://localhost:5173; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';"
+      http-equiv="Content-Security-Policy"
+    />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>desktop_pet</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/src/main.tsx" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+{
+  "id": "taffy",
+  "name": "Taffy",
+  "displayName": "Taffy",
+  "greeting": "准备起飞！",
+  "description": "A tiny pixel chibi aviator girl pet with pink hair, round brass goggles with heart lenses, and a waist charm matching the plush face from the second reference.",
+  "renderer": "atlas",
+  "colors": {
+    "body": "#fce4ec",
+    "accent": "#ec407a",
+    "cheek": "#f8bbd0"
+  },
+  "atlas": {
+    "image": "spritesheet.webp",
+    "cellW": 192,
+    "cellH": 208,
+    "cols": 8,
+    "rows": 9,
+    "imageRendering": "pixelated",
+    "states": {
+      "idle": {
+        "row": 0,
+        "frames": 6,
+        "fps": 4,
+        "loop": true
+      },
+      "walk": {
+        "row": 1,
+        "frames": 8,
+        "fps": 8,
+        "loop": true
+      },
+      "run-right": {
+        "row": 1,
+        "frames": 8,
+        "fps": 8,
+        "loop": true
+      },
+      "run-left": {
+        "row": 2,
+        "frames": 8,
+        "fps": 8,
+        "loop": true
+      },
+      "eat": {
+        "row": 3,
+        "frames": 4,
+        "fps": 8,
+        "loop": false
+      },
+      "sleep": {
+        "row": 6,
+        "frames": 6,
+        "fps": 3,
+        "loop": true
+      },
+      "play": {
+        "row": 4,
+        "frames": 5,
+        "fps": 8,
+        "loop": true
+      },
+      "hungry": {
+        "row": 6,
+        "frames": 6,
+        "fps": 5,
+        "loop": true
+      },
+      "sick": {
+        "row": 5,
+        "frames": 8,
+        "fps": 4,
+        "loop": true
+      },
+      "happy": {
+        "row": 3,
+        "frames": 4,
+        "fps": 8,
+        "loop": false
+      },
+      "hunt": {
+        "row": 7,
+        "frames": 6,
+        "fps": 8,
+        "loop": true
+      },
+      "waving": {
+        "row": 3,
+        "frames": 4,
+        "fps": 8,
+        "loop": false
+      },
+      "jumping": {
+        "row": 4,
+        "frames": 5,
+        "fps": 8,
+        "loop": true
+      },
+      "failed": {
+        "row": 5,
+        "frames": 8,
+        "fps": 4,
+        "loop": true
+      },
+      "waiting": {
+        "row": 6,
+        "frames": 6,
+        "fps": 5,
+        "loop": true
+      },
+      "running": {
+        "row": 7,
+        "frames": 6,
+        "fps": 8,
+        "loop": true
+      },
+      "review": {
+        "row": 8,
+        "frames": 6,
+        "fps": 5,
+        "loop": true
+      }
+    }
+  },
+  "ai": {
+    "personaFile": "persona.md"
+  }
+}

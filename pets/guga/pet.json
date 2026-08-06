@@ -1,0 +1,57 @@
+{
+  "id": "guga",
+  "name": "咕嘎",
+  "version": "1.0.0",
+  "greeting": "咕～我是咕嘎！",
+  "description": "视频动画桌宠（webm）",
+  "colors": {
+    "body": "#ffe082",
+    "accent": "#ffb300",
+    "cheek": "#ffcc80"
+  },
+  "renderer": "video",
+  "video": {
+    "dir": "large/webm",
+    "ext": "webm",
+    "aspect": 1,
+    "clips": {
+      "idle": { "file": "idle.webm", "loop": true },
+      "walk": { "file": "walk.webm", "loop": true },
+      "eat": { "file": "eat.webm", "loop": false },
+      "hungry": { "file": "hungry.webm", "loop": true },
+      "rest": { "file": "rest.webm", "loop": true },
+      "dance": { "file": "dance.webm", "loop": true },
+      "spin": { "file": "spin.webm", "loop": false },
+      "angry": { "file": "angry.webm", "loop": true },
+      "headpat": { "file": "headpat.webm", "loop": false },
+      "work": { "file": "work.webm", "loop": true },
+      "study": { "file": "study.webm", "loop": true },
+      "watch": { "file": "watch.webm", "loop": true },
+      "music": { "file": "music.webm", "loop": true },
+      "milktea": { "file": "milktea.webm", "loop": false },
+      "grasp": { "file": "grasp.webm", "loop": true },
+      "peek": { "file": "peek.webm", "loop": false },
+      "walkout": { "file": "walkout.webm", "loop": false },
+      "farewell": { "file": "farewell.webm", "loop": false },
+      "question": { "file": "question.webm", "loop": true }
+    },
+    "behaviorMap": {
+      "idle": ["idle"],
+      "walk": ["walk"],
+      "hungry": ["hungry"],
+      "eat": ["eat", "milktea"],
+      "sleep": ["rest", "idle"],
+      "play": ["dance", "spin", "music"],
+      "sick": ["angry", "rest"],
+      "happy": ["headpat", "spin", "dance"],
+      "hunt": ["walk", "work"]
+    }
+  },
+  "audio": {
+    "mapFile": "audio.json",
+    "dir": "audio"
+  },
+  "ai": {
+    "personaFile": "persona.md"
+  }
+}
