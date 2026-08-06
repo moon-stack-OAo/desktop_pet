@@ -63,6 +63,5 @@
 
 ## 相关文档
 
-- `pets/SPRITESHEET_TEMPLATE.md` — 目标 spritesheet 字段
+- `pets/SPRITESHEET_TEMPLATE.md` — 精灵表配置手册（映射、切帧、新增模板）
 - `packages/schema/README.md` — normalize 映射表
-- `TODO.md` B-803 / B-804

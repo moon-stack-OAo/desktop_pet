@@ -115,16 +115,15 @@ $env:PET_ID="doro"; npm run desktop:dev
 | [apps/desktop/README.md](./apps/desktop/README.md)             | 应用架构、交互、环境变量、打包细节             |
 | [packages/schema/README.md](./packages/schema/README.md)       | pet.json 模型与 `loadPet` API    |
 | [packages/runtime/README.md](./packages/runtime/README.md)     | `BehaviorFSM` / AutoScheduler |
-| [pets/SPRITESHEET_TEMPLATE.md](./pets/SPRITESHEET_TEMPLATE.md) | 精灵表宠物 `pet.json` 字段与切帧说明      |
+| [pets/SPRITESHEET_TEMPLATE.md](./pets/SPRITESHEET_TEMPLATE.md) | 精灵表配置手册（atlas 映射、切帧、新增角色模板） |
 | [CHANGELOG.md](./CHANGELOG.md)                                 | 版本变更记录                        |
-| [TODO.md](./TODO.md)                                           | 优化 backlog（Epic / 任务）         |
 
 ## 宠物资源目录
 
 ```
 pets/
 ├── manifest.json          # 注册列表（当前 12 只）
-├── SPRITESHEET_TEMPLATE.md
+├── SPRITESHEET_TEMPLATE.md   # 精灵表配置手册
 ├── guga/                  # video 型示例
 │   ├── pet.json
 │   ├── persona.md

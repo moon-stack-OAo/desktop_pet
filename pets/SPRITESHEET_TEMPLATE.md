@@ -1,131 +1,238 @@
-# 精灵表宠物配置模板说明
+# 精灵表宠物配置手册
 
-本文说明 11 只 `renderer: "spritesheet"` 宠物的 `pet.json` 扩展字段含义，以及**占位动画**日后如何按真实切帧修正。
+本文说明如何为 desktop_pet 配置 **spritesheet** 型宠物（含历史 `atlas` 写法），以及切帧、行为映射与校验约定。
 
-> `guga` 为 `video` 型完整配置，不在本文范围。
+> **视频宠** `guga`（`renderer: video`）不在本文范围，见 `pets/guga/pet.json`。  
+> **完成度一览**见 [COMPLETION.md](./COMPLETION.md)。  
+> **schema 规范化**见 [packages/schema/README.md](../packages/schema/README.md)。
+
+---
+
+## 当前仓库状态（2026）
+
+| 项          | 说明                                                                                              |
+|------------|-------------------------------------------------------------------------------------------------|
+| 现网 11 只精灵宠 | `doro` / `elaina` / `homie` / … / `wukong`，磁盘上多为 **`renderer: "atlas"` + `atlas`**              |
+| 运行时        | `@pet/schema` 的 `normalizePet` 将 atlas **映射**为 `renderer: "spritesheet"` + `spritesheet`（B-804） |
+| 网格（11 宠一致） | **8 列 × 9 行**，单格 **192×208**；`homie` 图为 `spritesheet.png`，其余多为 `spritesheet.webp`               |
+| 多帧         | idle / walk / happy / eat 等已在 `atlas.states` 中配置并生效，**不再是全员 idle 占位**                           |
+| 推荐新宠写法     | 直接写 `renderer: "spritesheet"` + `spritesheet`（见下文模板）；不必再写 atlas                                 |
+
+---
+
+## 目录约定
+
+```
+pets/
+├── manifest.json          # 注册 id 列表
+├── <petId>/
+│   ├── pet.json           # 配置（必填）
+│   ├── persona.md         # AI 人设（推荐）
+│   └── spritesheet.webp   # 或 .png；路径与配置一致
+└── …
+```
+
+1. 新建目录 `pets/<petId>/`
+2. 放入精灵表图片与 `pet.json`、`persona.md`
+3. 在 `pets/manifest.json` 的 `pets` 数组中加入 `<petId>`
+4. 校验：`npm run test:schema`（含 `loadPet` / `loadAllPets`）或本地 `desktop:dev` 切宠
+
+---
 
 ## 统一字段概览
 
-| 字段                            | 说明                                  |
-|-------------------------------|-------------------------------------|
-| `id` / `displayName` / `name` | 标识与展示名；`name` 可与 `displayName` 相同   |
-| `version`                     | 配置版本，占位 `1.0.0`                     |
-| `greeting`                    | 开场问候语                               |
-| `description` / `kind`        | 保留原描述；`kind` 仅在原有时保留                |
-| `renderer`                    | 固定 `"spritesheet"`                  |
-| `size`                        | desktop_pet 窗口/逻辑尺寸，默认 `160×160`    |
-| `spritesheetPath`             | 兼容旧字段，与 `spritesheet.path` **必须一致** |
-| `spritesheet`                 | 精灵表元数据（见下）                          |
-| `behaviorMap`                 | 行为名 → 动画名列表                         |
-| `ai.personaFile`              | 人设文件，通常为 `persona.md`               |
+| 字段                                | 说明                                                           |
+|-----------------------------------|--------------------------------------------------------------|
+| `id` / `displayName` / `name`     | 标识与展示名；`displayName ?? name ?? id`                           |
+| `version`                         | 配置版本字符串（可选）                                                  |
+| `greeting`                        | 开场问候                                                         |
+| `description` / `kind` / `colors` | 元数据（可选）                                                      |
+| `renderer`                        | 推荐 `"spritesheet"`；历史可用 `"atlas"`（normalize 后变为 spritesheet） |
+| `size`                            | 窗口/逻辑尺寸，默认 **160×160**                                       |
+| `spritesheet`                     | 推荐主配置（path / 帧尺寸 / animations）                               |
+| `spritesheetPath`                 | 兼容旧字段；有则映射为 `spritesheet.path`                               |
+| `atlas`                           | 历史格式；见下节映射表                                                  |
+| `behaviorMap`                     | 行为名 → 动画名列表；缺省时由核心动画名推导                                      |
+| `ai.personaFile`                  | 通常为 `persona.md`                                             |
 
-## 占位动画约定（当前状态）
+---
 
-真实 spritesheet 的**行列数、单帧像素、各动作帧数尚未标定**，因此统一使用最小可运行占位：
+## 历史 `atlas` → 运行时 `spritesheet`
 
-```json
-"spritesheet":{"path": "spritesheet.webp", "frameWidth": 128, "frameHeight": 128, "animations": {"idle": {"row": 0, "frames": 1, "loop": true, "fps": 8}}}
+`normalizePet` 映射关系：
+
+| atlas             | spritesheet                                                 |
+|-------------------|-------------------------------------------------------------|
+| `image`（或 `path`） | `path`                                                      |
+| `cellW` / `cellH` | `frameWidth` / `frameHeight`                                |
+| `cols` / `rows`   | `columns` / `rows`                                          |
+| `states.<name>`   | `animations.<name>`（保留 `row` / `frames` / `fps` / `loop` 等） |
+
+- `renderer: "atlas"` → `renderer: "spritesheet"`
+- 无顶层 `behaviorMap` 时：若存在 `idle`/`walk`/`happy`/`eat`/`sleep`/`play`/`hungry`/`sick`/`hunt` 动画名，则推导为
+  `"walk": ["walk"]` 等形式
+- **显式 `behaviorMap` 优先于推导**
+
+现网 11 宠典型 `states` 行号（与图一致时即为真多帧）：
+
+| 状态                       | row | frames（典型） | loop  |
+|--------------------------|-----|------------|-------|
+| idle                     | 0   | 6          | true  |
+| walk / run-right         | 1   | 8          | true  |
+| run-left                 | 2   | 8          | true  |
+| eat / happy / waving     | 3   | 4          | false |
+| play / jumping           | 4   | 5          | true  |
+| sick / failed            | 5   | 8          | true  |
+| sleep / hungry / waiting | 6   | 6          | true  |
+| hunt / running           | 7   | 6          | true  |
+| review                   | 8   | 6          | true  |
+
+目视抽检、错行修正见 [COMPLETION.md](./COMPLETION.md)。
+
+---
+
+## 推荐：`spritesheet` 直写格式
+
+### 动画字段（`SpritesheetAnimation`）
+
+| 字段                 | 说明                                   |
+|--------------------|--------------------------------------|
+| `row`              | 行模式：第几行（从 0 起）                       |
+| `start` / `column` | 行内起始列；同时存在时 **`start` 优先**           |
+| `frames`           | 连续帧数                                 |
+| `fps`              | 帧率                                   |
+| `loop`             | 是否循环；`false` 时播完触发 FSM `onClipEnded` |
+
+扩展字段可通过索引签名保留，normalize 会原样带入。
+
+### 帧定位（与 `PetSpritesheet.tsx` 一致）
+
+网格 **行优先（row-major）**：
+
+```
+linear = base + frameIndex
+sx = (linear % columns) * frameWidth
+sy = floor(linear / columns) * frameHeight
 ```
 
-含义：
+| 模式   | 条件        | `base`                                   |
+|------|-----------|------------------------------------------|
+| 行模式  | 配置了 `row` | `row * columns + (start ?? column ?? 0)` |
+| 线性模式 | 未配置 `row` | `start ?? 0`                             |
 
-- `frameWidth` / `frameHeight`：默认按 **128×128** 单帧估算（非实测）
-- `idle`：第 0 行、**仅 1 帧**、循环；渲染器可先把整图或左上角一格当静态 idle
-- 其余行为在 `behaviorMap` 中暂时全部映射到 `"idle"`，避免缺动画报错——**这是占位，不是多帧 walk/happy/eat/sleep**
-- **`play` / `hungry` 等**：与 walk 相同，当前占位映射到 `idle`；桌面端喂食/摸头/玩耍在动画不可辨时仍更新养成值并显示短时 status（`flashStatus`）
-- **自主走动**：只要 `behaviorMap.walk` 能解析到已有动画（含映射到 `idle`），`AutoScheduler` 就会定时 `request('walk')`。占位阶段画面仍是 idle 单帧，仅 FSM behavior 变为 `walk`；**不要**把这说成已补全走路动画
+`columns`：优先配置值；否则 `floor(图宽 / frameWidth)`（至少 1）。  
+`frames === 1` 的 idle 可走单帧静态路径（不强制 canvas 切帧）。
 
-**homie** 的图片为 `spritesheet.png`，其余多为 `spritesheet.webp`。改路径时务必同步 `spritesheetPath` 与
-`spritesheet.path`。
-
-## schema 中的动画字段
-
-`packages/schema` 的 `SpritesheetAnimation` 一等字段为：
-
-- `start`：起始帧索引（可选）
-- `frames`：帧数（可选）
-- `fps`：帧率（可选）
-- `loop`：是否循环（可选）
-
-扩展字段（如 `row`、`column`）可通过索引签名保留，normalize 会原样带入 `animations`。
-
-渲染器帧定位约定（**行优先 / row-major**，见 `PetSpritesheet.tsx`）：
-
-| 模式 | 条件 | 起始线性索引 `base` | 第 i 帧源点 |
-|------|------|---------------------|-------------|
-| 行模式 | 配置了 `row` | `row * columns + (start ?? column ?? 0)` | `sx/sy` 由 `base + i` 行优先换算 |
-| 线性模式 | 未配置 `row` | `start ?? 0` | 同上 |
-
-`columns` 优先取精灵表配置；否则 `floor(图宽 / frameWidth)`。
-
-推荐日后写法（二选一）：
+示例：
 
 ```json
-"walk": {"row": 1, "frames": 4, "loop": true, "fps": 10}
+"walk": {"row": 1, "frames": 8, "loop": true, "fps": 8}
 ```
-
-或：
 
 ```json
-"walk": {"start": 8, "frames": 4, "loop": true, "fps": 10}
+"walk": {"start": 8, "frames": 8, "loop": true, "fps": 8}
 ```
 
-同行动画从第 2 列起可写：`{"row": 1, "start": 2, "frames": 3, ...}`（`column` 与 `start` 在行模式下等价作起始列；同时存在时 **`start` 优先**）。
+同行从第 2 列起：`{ "row": 1, "start": 2, "frames": 3, "loop": true, "fps": 10 }`。
 
-`SpritesheetConfig` 还可补充：
+### `behaviorMap`
 
-- `columns` / `rows`：整张表的列数、行数
-- 与 `frameWidth` / `frameHeight` 一起用于自动切片
+- 键：FSM 行为名（`idle` / `walk` / `eat` / `happy` / `play` / `sleep` / `hungry` …）
+- 值：候选 **动画名** 列表（须存在于 `animations` / clips）
+- 例：`"happy": ["happy", "idle"]` 表示优先 happy，缺失时回退 idle
+- 仅写 `walk → idle` 时，画面仍是 idle，**不要**称为已补全走路动画（FSM 可能 fold 占位）
 
-## 如何按真实切帧修正
+---
 
-1. **量图**：用图片工具查看 spritesheet 宽高；若为规则网格，则  
-   `frameWidth = 图宽 / columns`，`frameHeight = 图高 / rows`。
-2. **标定网格**：写入 `frameWidth`、`frameHeight`，以及可选的 `columns`、`rows`。
-3. **逐动作填写 `animations`**：为 `idle` / `walk` / `happy` / `eat` / `sleep` 等指定 `row` 或 `start`、`frames`、`fps`、
-   `loop`。
-4. **更新 `behaviorMap`**：把各行为指向真实动画名，例如：  
-   `"walk": ["walk"]`，`"happy": ["happy", "idle"]`。
-5. **校验**：在 `packages/schema` 下对 `pets` 根目录执行 `loadAllPets`，确保无 error。
-6. **勿删资源**：`persona.md`、原图、音频等与配置解耦，修正动画时不要删除它们。
-
-## 最小扩展模板（复制用）
+## 新增角色：推荐模板
 
 ```json
 {
   "id": "<pet-id>",
-  "displayName": "<Display Name>",
-  "name": "<Display Name>",
+  "displayName": "<展示名>",
+  "name": "<展示名>",
   "version": "1.0.0",
-  "greeting": "...",
-  "description": "...",
+  "greeting": "……",
+  "description": "……",
   "renderer": "spritesheet",
   "size": {
-    "width": 200,
-    "height": 200
+    "width": 160,
+    "height": 160
   },
   "spritesheetPath": "spritesheet.webp",
   "spritesheet": {
     "path": "spritesheet.webp",
-    "frameWidth": 128,
-    "frameHeight": 128,
+    "frameWidth": 192,
+    "frameHeight": 208,
+    "columns": 8,
+    "rows": 9,
     "animations": {
       "idle": {
         "row": 0,
-        "frames": 1,
+        "frames": 6,
+        "loop": true,
+        "fps": 4
+      },
+      "walk": {
+        "row": 1,
+        "frames": 8,
         "loop": true,
         "fps": 8
+      },
+      "happy": {
+        "row": 3,
+        "frames": 4,
+        "loop": false,
+        "fps": 8
+      },
+      "eat": {
+        "row": 3,
+        "frames": 4,
+        "loop": false,
+        "fps": 8
+      },
+      "play": {
+        "row": 4,
+        "frames": 5,
+        "loop": true,
+        "fps": 8
+      },
+      "sleep": {
+        "row": 6,
+        "frames": 6,
+        "loop": true,
+        "fps": 3
+      },
+      "hungry": {
+        "row": 6,
+        "frames": 6,
+        "loop": true,
+        "fps": 5
       }
     }
   },
   "behaviorMap": {
-    "idle": ["idle"],
-    "walk": ["idle"],
-    "happy": ["idle"],
-    "eat": ["idle"],
-    "sleep": ["idle"],
-    "play": ["idle"],
-    "hungry": ["idle"]
+    "idle": [
+      "idle"
+    ],
+    "walk": [
+      "walk"
+    ],
+    "happy": [
+      "happy"
+    ],
+    "eat": [
+      "eat"
+    ],
+    "play": [
+      "play"
+    ],
+    "sleep": [
+      "sleep"
+    ],
+    "hungry": [
+      "hungry"
+    ]
   },
   "ai": {
     "personaFile": "persona.md"
@@ -133,12 +240,73 @@
 }
 ```
 
-> 上表中 `walk`/`happy`/`eat`/`sleep`/`play`/`hungry` → `idle` **全部为占位映射**；仅在真正标定多行/多帧 spritesheet 后，才把对应项改成真实动画名。当前 desktop_pet **没有**为这些宠补全多帧美术资源。
+> `frameWidth` / `columns` 等请按**实际量图**填写，上表数值对齐现网 11 宠网格，仅作参考。
+
+### 兼容：仅占位单帧（应急）
+
+美术未齐时可用最小可运行配置（**明确为占位**）：
+
+```json
+"spritesheet": {
+"path": "spritesheet.webp",
+"frameWidth": 128,
+"frameHeight": 128,
+"animations": {
+"idle": {
+"row": 0, "frames": 1, "loop": true, "fps": 8
+}
+}
+},
+"behaviorMap": {
+"idle": ["idle"],
+"walk": ["idle"],
+"happy": ["idle"]
+}
+```
+
+桌面端喂食/摸头等在动画不可辨时仍可能更新养成并 `flashStatus`；自主 `walk` 调度在 map 能解析到 clip 时仍会触发，画面可能仍是
+idle。
+
+---
+
+## 量图与修正步骤
+
+1. **量图**：查看 spritesheet 宽高；规则网格时  
+   `frameWidth = 图宽 / columns`，`frameHeight = 图高 / rows`。
+2. **写网格**：`frameWidth` / `frameHeight`，建议同时写 `columns` / `rows`。
+3. **写 `animations`**：为各动作指定 `row` 或 `start`、`frames`、`fps`、`loop`。
+4. **写 `behaviorMap`**：行为指向真实动画名，避免无意义的全 map→idle。
+5. **校验**：`loadPet` / `loadAllPets` 无 error；`desktop:dev` 目视 walk / happy。
+6. **勿删资源**：修正配置时不要误删 `persona.md`、原图、音频。
+
+---
+
+## 校验与加载
+
+| 层                    | 行为                                                         |
+|----------------------|------------------------------------------------------------|
+| schema `validatePet` | spritesheet 型必须有非空相对路径 `spritesheet.path`；动画元数据错误**不**硬拦   |
+| 主进程 `pet-loader`     | 图片必须存在；缺 idle / 无法构建则**拒载**；schema 有 error 但仍可构建则**降级**并提示 |
+| 路径                   | 相对宠物目录；禁止绝对路径                                              |
+
+路径变更时请同步：`spritesheet.path`、可选 `spritesheetPath`、实际文件名（如 webp/png）。
+
+---
 
 ## 注意事项
 
-- JSON **不能写注释**；说明统一放在本文件。
-- 保持 `spritesheetPath` 与 `spritesheet.path` 一致，便于旧代码与新 normalize 双轨兼容。
-- 校验只要求 spritesheet 型具备非空相对路径 `spritesheet.path`；动画元数据错误不会被 schema 硬拦，需渲染侧与人工核对。
-- 未 PUSH 前的改动视为同一版本；无 TAG 前勿随意改 `version` 语义（当前统一占位 `1.0.0`）。
-- 现网 11 只 spritesheet 宠的 `behaviorMap` 仍是「全映射 idle」的最小占位；若日后扩展 `play`/`hungry` 映射，优先保证 `animations` 里已有对应 key，再改 map。
+- `pet.json` **不能写注释**；说明放在本文件或 COMPLETION。
+- 保持 `spritesheetPath` 与 `spritesheet.path` 一致（若两者都写）。
+- 未发 TAG 前勿随意改产品版本号；宠物 `version` 字段可按角色配置独立维护。
+- AI 人设见各宠 `persona.md`；与动画配置解耦。
+
+---
+
+## 相关链接
+
+| 文档                                                        | 内容                       |
+|-----------------------------------------------------------|--------------------------|
+| [COMPLETION.md](./COMPLETION.md)                          | 各宠动画完成度、目视验收             |
+| [packages/schema/README.md](../packages/schema/README.md) | normalize / validate API |
+| `apps/desktop/src/components/PetSpritesheet.tsx`          | 渲染切帧实现                   |
+| 根 [README.md](../README.md)                               | monorepo 快速启动            |

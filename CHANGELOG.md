@@ -14,6 +14,7 @@
 
 ### 文档
 
+- 更新 `pets/SPRITESHEET_TEMPLATE.md`：反映 atlas→spritesheet 现状、帧约定、推荐模板与校验流程
 - 优化全部 12 只宠物 `pets/*/persona.md`：统一中文结构（身份/性格/说话风格/禁忌），区分角色辨识度
 - 根 `README.md` 补齐：项目简介、monorepo 结构、快速启动、常用脚本，并链到 `apps/desktop/README`（B-101）
 - 修正 `apps/desktop/README` 示例路径与仓库一致（B-102）
