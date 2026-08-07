@@ -22,10 +22,20 @@ const IPC = {
   AI_CHAT: 'ai:chat',
   AI_GET_SETTINGS: 'ai:get-settings',
   AI_SAVE_SETTINGS: 'ai:save-settings',
-  /** 主进程 → 渲染：打开对话面板 */
+  /** @deprecated 已改独立工具窗；保留通道名以免旧包崩溃 */
   UI_OPEN_CHAT: 'ui:open-chat',
-  /** 主进程 → 渲染：打开 AI 设置 */
+  /** @deprecated 已改独立工具窗 */
   UI_OPEN_AI_SETTINGS: 'ui:open-ai-settings',
+
+  // —— 工具窗（AI 对话 / 设置） ——
+  /** 渲染 → 主进程：打开工具窗，payload 为 tab */
+  TOOL_OPEN: 'tool:open',
+  /** 渲染 → 主进程：隐藏工具窗 */
+  TOOL_HIDE: 'tool:hide',
+  /** 主进程 → 工具窗：切换 Tab（chat | settings） */
+  TOOL_SET_TAB: 'tool:set-tab',
+  /** 渲染（工具窗）→ 主进程：转发行为到宠物窗 FSM */
+  PET_DISPATCH_BEHAVIOR: 'pet:dispatch-behavior',
 
   // —— 应用 / 窗口 ——
   APP_QUIT: 'app:quit',
@@ -34,9 +44,10 @@ const IPC = {
   WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
   /** 渲染 → 主进程：对话/设置关闭后恢复宠物窗尺寸 */
   WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
-  /** 渲染 → 主进程：自定义拖窗开始 / 移动（避免 app-region:drag 抢走右键） */
+  /** 渲染 → 主进程：自定义拖窗开始 / 移动 / 结束（避免 app-region:drag 抢走右键） */
   WINDOW_DRAG_START: 'window:drag-start',
   WINDOW_DRAG_MOVE: 'window:drag-move',
+  WINDOW_DRAG_END: 'window:drag-end',
 
   // —— 自动更新 ——
   UPDATE_GET_STATE: 'update:get-state',

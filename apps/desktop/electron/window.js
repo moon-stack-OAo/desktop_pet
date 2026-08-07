@@ -294,6 +294,13 @@ function expandWindowForUi(host, opts = {}) {
   const w = Math.max(280, opts.width || 320);
   const h = Math.max(320, opts.height || 380);
   try {
+    // 临时放开尺寸锁，便于对话/设置面板
+    mainWindow.setMinimumSize(140, 140);
+    mainWindow.setMaximumSize(800, 900);
+  } catch {
+    /* ignore */
+  }
+  try {
     mainWindow.setContentSize(w, h);
   } catch {
     mainWindow.setSize(w, h);
@@ -325,6 +332,13 @@ function applyWindowChrome(petPayload, host, tray) {
   const mainWindow = host.getMainWindow();
   if (!mainWindow || mainWindow.isDestroyed()) return;
   const { w, h } = resolvePetWindowSize(petPayload);
+  try {
+    // 锁定 min=max，防止拖动/DPI 切换时外框尺寸漂移
+    mainWindow.setMinimumSize(w, h);
+    mainWindow.setMaximumSize(w, h);
+  } catch {
+    /* ignore */
+  }
   try {
     mainWindow.setContentSize(w, h);
   } catch {
@@ -392,6 +406,12 @@ function createWindow(petPayload, host) {
   host.setMainWindow(mainWindow);
 
   mainWindow.setMenuBarVisibility(false);
+  try {
+    mainWindow.setMinimumSize(w, h);
+    mainWindow.setMaximumSize(w, h);
+  } catch {
+    /* ignore */
+  }
   try {
     mainWindow.setAlwaysOnTop(true, 'pop-up-menu');
   } catch {

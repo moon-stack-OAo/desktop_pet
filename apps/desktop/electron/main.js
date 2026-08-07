@@ -23,6 +23,12 @@ const {
   revealMainWindow,
   scheduleVisibilityWatchdog,
 } = require('./window');
+const {
+  openToolWindow,
+  hideToolWindow,
+  destroyToolWindow,
+  setToolWindowQuitting,
+} = require('./tool-window');
 const { createTray, rebuildTrayMenu } = require('./tray-menu');
 const { registerIpc } = require('./ipc');
 const { IPC } = require('../shared/ipc-channels');
@@ -82,6 +88,12 @@ function buildHost() {
     getMainWindow: () => mainWindow,
     setMainWindow: (win) => {
       mainWindow = win;
+      // 主窗关闭后：销毁隐藏的工具窗并退出（否则 getAllWindows 仍有工具窗不触发 all-closed）
+      if (!win && process.platform !== 'darwin') {
+        setToolWindowQuitting(true);
+        destroyToolWindow();
+        app.quit();
+      }
     },
     getTray: () => tray,
     setTray: (t) => {
@@ -196,6 +208,12 @@ app.whenReady().then(async () => {
     restorePetWindowSize: () => {
       restorePetWindowSize(buildHost(), tray);
     },
+    openToolWindow: (opts) => {
+      openToolWindow(buildHost(), opts || {});
+    },
+    hideToolWindow: () => {
+      hideToolWindow();
+    },
     // 右键原生菜单需要窗体与当前载荷
     getMainWindow: () => mainWindow,
     getCurrentPayload: () => currentPayload,
@@ -278,8 +296,16 @@ app.whenReady().then(async () => {
   });
 });
 
+// 工具窗 close 时 hide 复用，不会单独触发退出。
+// 主窗关闭见 buildHost.setMainWindow(null)。
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (process.platform === 'darwin') return;
+  if (!mainWindow || mainWindow.isDestroyed()) {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  setToolWindowQuitting(true);
+  destroyToolWindow();
 });

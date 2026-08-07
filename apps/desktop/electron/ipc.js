@@ -40,6 +40,8 @@ function formatErr(err) {
  * @property {() => void} [restorePetWindowSize]
  * @property {() => import('electron').BrowserWindow | null} [getMainWindow]
  * @property {() => { displayName?: string; id?: string } | null} [getCurrentPayload]
+ * @property {(opts?: { tab?: 'chat' | 'settings' }) => void} [openToolWindow]
+ * @property {() => void} [hideToolWindow]
  */
 
 /**
@@ -162,9 +164,39 @@ function registerIpc(host) {
     }
   });
 
+  // 打开 AI 工具窗（chat | settings）
+  ipcMain.on(IPC.TOOL_OPEN, (_event, tab) => {
+    if (typeof host.openToolWindow === 'function') {
+      host.openToolWindow({
+        tab: tab === 'settings' ? 'settings' : 'chat',
+      });
+    }
+  });
+
+  ipcMain.on(IPC.TOOL_HIDE, () => {
+    if (typeof host.hideToolWindow === 'function') {
+      host.hideToolWindow();
+    }
+  });
+
+  // 工具窗 → 宠物窗：转发行为请求
+  ipcMain.on(IPC.PET_DISPATCH_BEHAVIOR, (_event, behavior) => {
+    if (typeof behavior !== 'string' || !behavior) return;
+    try {
+      const mainWindow =
+        typeof host.getMainWindow === 'function' ? host.getMainWindow() : null;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send(IPC.PET_REQUEST_BEHAVIOR, behavior);
+      }
+    } catch (err) {
+      log.warn('[pet] dispatch-behavior 失败:', formatErr(err));
+    }
+  });
+
   /**
    * 自定义拖窗状态（按 webContents.id）
-   * @type {Map<number, { originX: number; originY: number; startScreenX: number; startScreenY: number }>}
+   * 锁定 drag 起始时的 width/height：Windows 多 DPI 下 setPosition 会改外框尺寸。
+   * @type {Map<number, { originX: number; originY: number; width: number; height: number; startScreenX: number; startScreenY: number }>}
    */
   const dragState = new Map();
 
@@ -179,9 +211,12 @@ function registerIpc(host) {
       const screenY =
         payload && typeof payload.screenY === 'number' ? payload.screenY : 0;
       const b = win.getBounds();
+      // 用外框 bounds 锁定尺寸；跨 1.5x/1.0x 屏时也保持一致
       dragState.set(event.sender.id, {
         originX: b.x,
         originY: b.y,
+        width: b.width,
+        height: b.height,
         startScreenX: screenX,
         startScreenY: screenY,
       });
@@ -203,10 +238,24 @@ function registerIpc(host) {
         payload && typeof payload.screenY === 'number' ? payload.screenY : 0;
       const nx = Math.round(st.originX + (screenX - st.startScreenX));
       const ny = Math.round(st.originY + (screenY - st.startScreenY));
-      win.setPosition(nx, ny);
+      // 勿用 setPosition：Win + 多 DPI 会顺带改 size；显式带上锁定宽高
+      win.setBounds(
+        {
+          x: nx,
+          y: ny,
+          width: st.width,
+          height: st.height,
+        },
+        false,
+      );
     } catch (err) {
       log.warn('[window] drag-move 失败:', formatErr(err));
     }
+  });
+
+  // 松手清理，避免残留状态
+  ipcMain.on(IPC.WINDOW_DRAG_END, (event) => {
+    dragState.delete(event.sender.id);
   });
 }
 

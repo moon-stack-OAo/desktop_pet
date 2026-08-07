@@ -194,7 +194,7 @@ export default function ChatPanel({
       <div className="chat-panel-list" ref={listRef}>
         {messages.length === 0 ? (
           <div className="chat-panel-hint">
-            双击宠物打开 · 说点什么吧～
+            说点什么吧～
             <br />
             标题「本地/云端」表示 AI 模式
           </div>

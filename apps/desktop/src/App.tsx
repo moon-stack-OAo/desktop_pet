@@ -1,13 +1,10 @@
-import {useCallback, useEffect, useState} from 'react';
-import AiSettingsPanel from './components/AiSettingsPanel';
-import ChatPanel from './components/ChatPanel';
+import {useCallback, useEffect} from 'react';
 import PetStage from './components/PetStage';
 import PetSpritesheet from './components/PetSpritesheet';
 import PetVideo from './components/PetVideo';
 import StatusOverlay from './components/StatusOverlay';
 import UpdateDialog from './components/UpdateDialog';
 import VitalsBar from './components/VitalsBar';
-import {useChatSession} from './hooks/useChatSession';
 import {useDebugBehaviors} from './hooks/useDebugBehaviors';
 import {useIgnoreMouse} from './hooks/useIgnoreMouse';
 import {usePetMenu} from './hooks/usePetMenu';
@@ -16,7 +13,6 @@ import {PetProvider, usePetController} from './pet/PetContext';
 
 function PetApp() {
   useWindowDrag();
-  const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const {
     payload,
     status,
@@ -36,53 +32,31 @@ function PetApp() {
   // 同步主进程穿透状态（托盘/右键菜单切换时）
   useIgnoreMouse({ setStatus });
 
-  const chat = useChatSession({
-    petId: payload?.id,
-    vitals,
-    feed,
-    pat,
-    playWith,
-    request,
-  });
-
-  const openAiSettings = useCallback(() => {
-    setAiSettingsOpen(true);
-  }, []);
-
-  const closeAiSettings = useCallback(() => {
-    setAiSettingsOpen(false);
-  }, []);
-
-  // 托盘「AI 设置…」
+  // 双击宠物 → 打开 AI 工具窗对话 Tab
   useEffect(() => {
-    const unsub = window.petAPI?.onOpenAiSettings?.(() => {
-      openAiSettings();
-    });
-    return () => {
-      unsub?.();
+    const onDblClick = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t?.closest?.('input, button, textarea, .update-dialog')) {
+        return;
+      }
+      e.preventDefault();
+      void window.petAPI?.getIgnoreMouse?.().then((v) => {
+        if (v) window.petAPI?.setIgnoreMouse?.(false);
+      });
+      window.petAPI?.openToolWindow?.('chat');
     };
-  }, [openAiSettings]);
-
-  // 对话/设置打开时保持放大窗；全部关闭后恢复宠物尺寸
-  useEffect(() => {
-    const uiOpen = chat.chatOpen || aiSettingsOpen;
-    if (!uiOpen) {
-      window.petAPI?.restorePetWindowSize?.();
-    }
-  }, [chat.chatOpen, aiSettingsOpen]);
+    document.addEventListener('dblclick', onDblClick);
+    return () => document.removeEventListener('dblclick', onDblClick);
+  }, []);
 
   // 右键原生菜单 + Esc
   usePetMenu({
-    chatOpen: chat.chatOpen,
-    onCloseChat: chat.closeChat,
     vitals,
     muted,
-    aiSettingsOpen,
-    onCloseAiSettings: closeAiSettings,
   });
 
   useDebugBehaviors({
-    chatOpen: chat.chatOpen,
+    chatOpen: false,
     feed,
     pat,
     playWith,
@@ -177,16 +151,6 @@ function PetApp() {
       ) : null}
       <StatusOverlay text={overlayText} />
       <VitalsBar vitals={vitals} />
-      <ChatPanel
-        open={chat.chatOpen && !aiSettingsOpen}
-        petName={showName || payload?.id || '小宠'}
-        aiMode={chat.lastMode}
-        onSend={chat.handleChatSend}
-        onAction={chat.handleChatAction}
-        onClose={chat.closeChat}
-        onOpenSettings={openAiSettings}
-      />
-      <AiSettingsPanel open={aiSettingsOpen} onClose={closeAiSettings} />
       <UpdateDialog />
     </PetStage>
   );

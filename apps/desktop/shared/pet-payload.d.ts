@@ -281,9 +281,24 @@ export interface PetAPI {
    * 保存 AI 设置（Key 经 safeStorage 加密写 userData）
    */
   saveAiSettings: (partial?: AiSettingsSaveInput) => Promise<OkResult>;
-  /** 托盘等请求打开对话；返回取消订阅 */
+  /**
+   * 打开 AI 工具窗（独立 BrowserWindow）
+   * @param tab 'chat' | 'settings'，默认 chat
+   */
+  openToolWindow: (tab?: 'chat' | 'settings') => void;
+  /** 隐藏 AI 工具窗（不退出应用） */
+  hideToolWindow: () => void;
+  /**
+   * 工具窗收到主进程 Tab 切换；返回取消订阅
+   */
+  onToolTab: (cb: (tab: 'chat' | 'settings') => void) => (() => void) | void;
+  /**
+   * 工具窗 → 主进程 → 宠物窗：触发行为（eat/happy/play 等）
+   */
+  requestBehavior: (behavior: string) => void;
+  /** @deprecated 托盘已改 openToolWindow；保留兼容 */
   onOpenChat: (cb: () => void) => (() => void) | void;
-  /** 托盘等请求打开 AI 设置；返回取消订阅 */
+  /** @deprecated 托盘已改 openToolWindow；保留兼容 */
   onOpenAiSettings: (cb: () => void) => (() => void) | void;
   /** 退出应用 */
   quit: () => void;
@@ -317,6 +332,8 @@ export interface PetAPI {
    */
   startWindowDrag: (screenX: number, screenY: number) => void;
   moveWindowDrag: (screenX: number, screenY: number) => void;
+  /** 拖动结束，清理主进程 drag 状态 */
+  endWindowDrag: () => void;
 
   // —— 自动更新 ——
   getUpdateState: () => Promise<UpdateState>;

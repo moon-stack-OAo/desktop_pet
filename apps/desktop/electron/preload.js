@@ -21,6 +21,10 @@ const IPC = {
   AI_SAVE_SETTINGS: 'ai:save-settings',
   UI_OPEN_CHAT: 'ui:open-chat',
   UI_OPEN_AI_SETTINGS: 'ui:open-ai-settings',
+  TOOL_OPEN: 'tool:open',
+  TOOL_HIDE: 'tool:hide',
+  TOOL_SET_TAB: 'tool:set-tab',
+  PET_DISPATCH_BEHAVIOR: 'pet:dispatch-behavior',
   APP_QUIT: 'app:quit',
   WINDOW_SET_IGNORE_MOUSE: 'window:set-ignore-mouse',
   WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse',
@@ -28,6 +32,7 @@ const IPC = {
   WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
   WINDOW_DRAG_START: 'window:drag-start',
   WINDOW_DRAG_MOVE: 'window:drag-move',
+  WINDOW_DRAG_END: 'window:drag-end',
   UPDATE_GET_STATE: 'update:get-state',
   UPDATE_CHECK: 'update:check',
   UPDATE_DOWNLOAD: 'update:download',
@@ -91,6 +96,43 @@ contextBridge.exposeInMainWorld('petAPI', {
   saveAiSettings: (partial) =>
     ipcRenderer.invoke(IPC.AI_SAVE_SETTINGS, partial || {}),
 
+  /**
+   * 打开 AI 工具窗
+   * @param {'chat' | 'settings'} [tab]
+   */
+  openToolWindow: (tab) => {
+    const t = tab === 'settings' ? 'settings' : 'chat';
+    ipcRenderer.send(IPC.TOOL_OPEN, t);
+  },
+
+  /** 隐藏 AI 工具窗 */
+  hideToolWindow: () => {
+    ipcRenderer.send(IPC.TOOL_HIDE);
+  },
+
+  /**
+   * 工具窗 Tab 切换（主进程推送）
+   * @param {(tab: 'chat' | 'settings') => void} callback
+   */
+  onToolTab: (callback) => {
+    /** @param {Electron.IpcRendererEvent} _event @param {unknown} tab */
+    const handler = (_event, tab) => {
+      callback(tab === 'settings' ? 'settings' : 'chat');
+    };
+    ipcRenderer.on(IPC.TOOL_SET_TAB, handler);
+    return () => ipcRenderer.removeListener(IPC.TOOL_SET_TAB, handler);
+  },
+
+  /**
+   * 工具窗请求宠物行为（主进程转发到宠物窗）
+   * @param {string} behavior
+   */
+  requestBehavior: (behavior) => {
+    if (typeof behavior === 'string' && behavior) {
+      ipcRenderer.send(IPC.PET_DISPATCH_BEHAVIOR, behavior);
+    }
+  },
+
   quit: () => ipcRenderer.send(IPC.APP_QUIT),
 
   /**
@@ -135,6 +177,11 @@ contextBridge.exposeInMainWorld('petAPI', {
       screenX: Number(screenX) || 0,
       screenY: Number(screenY) || 0,
     });
+  },
+
+  /** 拖动结束（松手 / blur） */
+  endWindowDrag: () => {
+    ipcRenderer.send(IPC.WINDOW_DRAG_END);
   },
 
   /** @param {() => void} callback */

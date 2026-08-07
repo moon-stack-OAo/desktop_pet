@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react';
 
 const NO_DRAG_SEL =
-  '.chat-panel, .ai-settings-panel, .update-dialog, input, textarea, button, a, [data-no-drag]';
+  '.update-dialog, input, textarea, button, a, [data-no-drag]';
 
 /**
  * 无边框窗自定义拖动：左键在可拖区域按下并移动 → IPC 改窗口位置。
@@ -31,13 +31,16 @@ export function useWindowDrag(): void {
       // 按住左键才拖
       if ((e.buttons & 1) === 0) {
         draggingRef.current = false;
+        window.petAPI?.endWindowDrag?.();
         return;
       }
       window.petAPI?.moveWindowDrag?.(e.screenX, e.screenY);
     };
 
     const endDrag = () => {
+      if (!draggingRef.current) return;
       draggingRef.current = false;
+      window.petAPI?.endWindowDrag?.();
     };
 
     document.addEventListener('pointerdown', onPointerDown, true);

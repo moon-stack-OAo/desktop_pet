@@ -1,6 +1,10 @@
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import type {Plugin} from 'vite';
 import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /**
  * 开发态：shared/*.js 是 CJS（module.exports），浏览器 ESM 命名导入会报
@@ -60,6 +64,12 @@ export default defineConfig({
     outDir: 'dist-renderer',
     emptyOutDir: true,
     sourcemap: true,
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        tool: path.resolve(__dirname, 'tool.html'),
+      },
+    },
     commonjsOptions: {
       include: [/node_modules/, /shared[\\/]/],
       transformMixedEsModules: true,

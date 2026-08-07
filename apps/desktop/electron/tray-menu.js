@@ -59,41 +59,29 @@ function showWindowInteractive(host) {
 }
 
 /**
- * 托盘：打开 AI 对话（放大窗口 + 通知渲染层）
+ * 托盘：打开 AI 对话（独立工具窗）
  * @param {TrayHost} host
  */
 function openChatFromTray(host) {
-  const mainWindow = showWindowInteractive(host);
-  if (!mainWindow) {
-    log.warn('[tray] 打开对话失败：无主窗口');
-    return;
-  }
   try {
-    const { expandWindowForUi } = require('./window');
-    expandWindowForUi(host);
+    const { openToolWindow } = require('./tool-window');
+    openToolWindow(host, { tab: 'chat' });
   } catch (err) {
-    log.warn('[tray] expandWindow 失败:', formatErr(err));
+    log.warn('[tray] 打开对话工具窗失败:', formatErr(err));
   }
-  mainWindow.webContents.send(IPC.UI_OPEN_CHAT);
 }
 
 /**
- * 托盘：打开 AI 设置
+ * 托盘：打开 AI 设置（独立工具窗）
  * @param {TrayHost} host
  */
 function openAiSettingsFromTray(host) {
-  const mainWindow = showWindowInteractive(host);
-  if (!mainWindow) {
-    log.warn('[tray] 打开 AI 设置失败：无主窗口');
-    return;
-  }
   try {
-    const { expandWindowForUi } = require('./window');
-    expandWindowForUi(host);
+    const { openToolWindow } = require('./tool-window');
+    openToolWindow(host, { tab: 'settings' });
   } catch (err) {
-    log.warn('[tray] expandWindow 失败:', formatErr(err));
+    log.warn('[tray] 打开 AI 设置工具窗失败:', formatErr(err));
   }
-  mainWindow.webContents.send(IPC.UI_OPEN_AI_SETTINGS);
 }
 
 /**
