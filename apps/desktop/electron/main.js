@@ -20,6 +20,8 @@ const {
   applyWindowChrome,
   createWindow,
   restorePetWindowSize,
+  revealMainWindow,
+  scheduleVisibilityWatchdog,
 } = require('./window');
 const { createTray, rebuildTrayMenu } = require('./tray-menu');
 const { registerIpc } = require('./ipc');
@@ -34,6 +36,19 @@ try {
   );
 } catch {
   /* ignore */
+}
+
+// 部分 GPU 驱动下透明窗整窗不合成；PET_DISABLE_GPU=1 时走软件合成排查
+if (
+  process.env.PET_DISABLE_GPU === '1' ||
+  process.env.PET_DISABLE_GPU === 'true'
+) {
+  try {
+    app.disableHardwareAcceleration();
+    log.info('[main] PET_DISABLE_GPU=1：已禁用硬件加速');
+  } catch {
+    /* ignore */
+  }
 }
 
 // 须在 app ready 之前注册特权
@@ -130,12 +145,17 @@ async function switchPet(petId) {
     writePrefsPetId(currentPetId);
     applyWindowChrome(payload, buildHost(), tray);
     if (mainWindow && !mainWindow.isDestroyed()) {
-      // 关穿透，避免切宠后点不到、误以为没切回去
-      if (ignoreMouseEvents) {
-        applyIgnoreMouse(false, buildHost());
+      // 关穿透 + 拉回可见区，避免切宠后点不到、误以为没切回去
+      try {
+        const { revealMainWindow } = require('./window');
+        revealMainWindow(buildHost());
+      } catch {
+        if (ignoreMouseEvents) {
+          applyIgnoreMouse(false, buildHost());
+        }
+        if (mainWindow.isMinimized()) mainWindow.restore();
+        mainWindow.show();
       }
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.show();
       mainWindow.webContents.send(IPC.PET_READY, payload);
     }
     rebuildTrayMenu(buildHost());
@@ -228,8 +248,22 @@ app.whenReady().then(async () => {
     if (prefs.ignoreMouse === true) {
       ignoreMouseEvents = true;
     }
-    createWindow(payload, buildHost());
-    createTray(buildHost());
+    const host = buildHost();
+    createWindow(payload, host);
+    createTray(host);
+    // 启动后立即再 reveal 一次：Windows 透明窗 ready-to-show/show 偶发不生效
+    // （日志可见 dom-ready visible=false，托盘已有却无小窗）
+    setTimeout(() => {
+      try {
+        revealMainWindow(host, { relocate: false, focus: true });
+      } catch (e) {
+        log.warn(
+          '[window] 启动 reveal 失败:',
+          e instanceof Error ? e.message : String(e),
+        );
+      }
+    }, 0);
+    scheduleVisibilityWatchdog(host);
     // 点击穿透 + skipTaskbar：看起来像「启动无响应」——托盘气泡已在 createTray 中提示
   } catch (err) {
     log.error('[pet] 加载失败:', err);

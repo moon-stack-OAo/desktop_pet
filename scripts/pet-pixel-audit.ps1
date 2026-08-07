@@ -1,5 +1,5 @@
-# pet-pixel-audit.ps1 — 12 宠资源/尺寸/行填充/guga clips 审计（可复跑）
-# 依赖：ImageMagick `magick`（identify/crop/resize）；guga 仅检查 webm 路径是否存在（可选 ffmpeg 不强制）
+﻿# pet-pixel-audit.ps1 — 12 宠资源/尺寸/行填充/guga clips 审计（可复跑）
+# 依赖：ImageMagick `magick`（identify/crop/resize）；guga 检查 webm 路径 + 可选 ffprobe（VP9 + alpha_mode=1）
 # 用法（仓库根）：npm run audit:pets
 # 或：powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pet-pixel-audit.ps1
 
@@ -182,38 +182,106 @@ foreach ($id in $atlasIds) {
   Write-Host ('{0,-10} {1,-8} {2,-14} {3,-12} {4,-20} {5}' -f $id, $verdict, $sizeStr, $emptyStr, $fpsStr, $noteStr)
 }
 
-# guga video clips
+# guga video clips + VP9 alpha 门禁（可选 ffprobe）
 Write-Host ''
 Write-Host '=== GUGA (video) ==='
 $gugaPath = Join-Path $Root 'pets\guga\pet.json'
+$ffprobeCmd = Get-Command ffprobe -ErrorAction SilentlyContinue
+$Ffprobe = if ($env:FFPROBE -and (Test-Path -LiteralPath $env:FFPROBE)) {
+  $env:FFPROBE
+} elseif ($ffprobeCmd) {
+  $ffprobeCmd.Source
+} else {
+  $null
+}
+
+function Test-GugaWebmAlpha([string]$fullPath) {
+  # 返回 @{ ok; codec; alphaMode; note }
+  if (-not $Ffprobe) {
+    return @{ ok = $null; codec = $null; alphaMode = $null; note = 'ffprobe-missing' }
+  }
+  $raw = & $Ffprobe -v error -select_streams v:0 `
+    -show_entries stream=codec_name:stream_tags=alpha_mode `
+    -of default=noprint_wrappers=1 $fullPath 2>$null
+  $text = ($raw -join "`n")
+  $codec = $null
+  if ($text -match 'codec_name=(.+)') { $codec = $Matches[1].Trim() }
+  $alphaMode = $null
+  if ($text -match '(?i)alpha_mode=(\d+)') { $alphaMode = $Matches[1].Trim() }
+  if ($codec -ne 'vp9') {
+    return @{ ok = $false; codec = $codec; alphaMode = $alphaMode; note = "codec=$codec (want vp9)" }
+  }
+  if ($alphaMode -ne '1') {
+    return @{ ok = $false; codec = $codec; alphaMode = $alphaMode; note = 'no alpha_mode=1 (opaque/no-alpha export)' }
+  }
+  return @{ ok = $true; codec = $codec; alphaMode = $alphaMode; note = 'vp9+alpha_mode' }
+}
+
 if (Test-Path $gugaPath) {
-  $guga = Get-Content $gugaPath -Raw -Encoding UTF8 | ConvertFrom-Json
   $clipNotes = @()
   $missing = @()
+  $noAlpha = @()
   $clipCount = 0
+  $alphaOk = 0
+  $alphaSkip = 0
   # clips 可能在 video.clips / states / animations 等；尽量宽松枚举字符串路径
   $jsonRaw = Get-Content $gugaPath -Raw -Encoding UTF8
   $paths = [regex]::Matches($jsonRaw, '"([^"]+\.webm)"') | ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+  # 若 pet.json 无显式 .webm 字符串，回落扫描 large/webm
+  if (-not $paths -or $paths.Count -eq 0) {
+    $webmDir = Join-Path $Root 'pets\guga\large\webm'
+    if (Test-Path $webmDir) {
+      $paths = @(Get-ChildItem -LiteralPath $webmDir -Filter '*.webm' | ForEach-Object { "large/webm/$($_.Name)" })
+    }
+  }
   foreach ($rel in $paths) {
     $clipCount++
-    $full = Join-Path $Root "pets\guga\$rel"
+    $full = if ([IO.Path]::IsPathRooted($rel)) { $rel } else { Join-Path $Root "pets\guga\$rel" }
+    # pet.json 里可能是 clip 名而非路径：兼容 large/webm/<name>
+    if (-not (Test-Path $full)) {
+      $alt = Join-Path $Root "pets\guga\large\webm\$([IO.Path]::GetFileName($rel))"
+      if (Test-Path $alt) { $full = $alt }
+    }
     if (-not (Test-Path $full)) {
       $missing += $rel
       $clipNotes += "MISSING:$rel"
+      continue
+    }
+    $a = Test-GugaWebmAlpha $full
+    if ($null -eq $a.ok) {
+      $alphaSkip++
+    } elseif ($a.ok) {
+      $alphaOk++
+    } else {
+      $noAlpha += $rel
+      $clipNotes += "NO_ALPHA:$rel ($($a.note))"
     }
   }
-  $gVerdict = if ($missing.Count) { 'FAIL' } elseif ($clipCount -eq 0) { 'WARN' } else { 'OK' }
-  if ($clipCount -eq 0) { $clipNotes += 'no .webm paths in pet.json' }
-  $results += [pscustomobject]@{
-    id        = 'guga'
-    renderer  = 'video'
-    clipCount = $clipCount
-    missing   = $missing
-    verdict   = $gVerdict
-    notes     = $clipNotes
+  $gVerdict = 'OK'
+  if ($missing.Count) { $gVerdict = 'FAIL' }
+  elseif ($clipCount -eq 0) { $gVerdict = 'WARN'; $clipNotes += 'no .webm paths' }
+  elseif ($noAlpha.Count) { $gVerdict = 'FAIL' }
+  elseif (-not $Ffprobe) {
+    $gVerdict = 'WARN'
+    $clipNotes += 'ffprobe missing; alpha gate skipped'
   }
-  Write-Host ("guga clips=$clipCount missing=$($missing.Count) verdict=$gVerdict")
-  if ($missing.Count) { $missing | ForEach-Object { Write-Host "  - $_" } }
+
+  $results += [pscustomobject]@{
+    id         = 'guga'
+    renderer   = 'video'
+    clipCount  = $clipCount
+    missing    = $missing
+    noAlpha    = $noAlpha
+    alphaOk    = $alphaOk
+    alphaSkip  = $alphaSkip
+    ffprobe    = [bool]$Ffprobe
+    verdict    = $gVerdict
+    notes      = $clipNotes
+  }
+  Write-Host ("guga clips=$clipCount missing=$($missing.Count) alphaOk=$alphaOk noAlpha=$($noAlpha.Count) verdict=$gVerdict")
+  if (-not $Ffprobe) { Write-Host '  (ffprobe not found — install ffmpeg or set FFPROBE to enable alpha gate)' }
+  if ($missing.Count) { $missing | ForEach-Object { Write-Host "  - MISSING $_" } }
+  if ($noAlpha.Count) { $noAlpha | ForEach-Object { Write-Host "  - NO_ALPHA $_" } }
 } else {
   Write-Host 'guga pet.json missing'
   $results += [pscustomobject]@{ id = 'guga'; verdict = 'FAIL'; notes = @('missing pet.json') }

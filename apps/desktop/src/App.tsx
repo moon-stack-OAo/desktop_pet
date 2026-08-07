@@ -138,7 +138,7 @@ function PetApp() {
     payload?.clips?.idle?.url ||
     payload?.idle?.url ||
     '';
-  const loop = currentClip ? currentClip.loop === true : true;
+  const loop = currentClip ? currentClip.loop : true;
   const clipName = state?.clip || 'idle';
 
   const overlayText =

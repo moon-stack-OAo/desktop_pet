@@ -24,7 +24,8 @@
     "desktop:dev": "npm run dev -w @pet/desktop",
     "desktop:pack": "npm run pack -w @pet/desktop",
     "desktop:dist": "npm run dist -w @pet/desktop",
-    "audit:pets": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pet-pixel-audit.ps1"
+    "audit:pets": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/pet-pixel-audit.ps1",
+    "reencode:guga-alpha": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/reencode-guga-webm-alpha.ps1"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4"

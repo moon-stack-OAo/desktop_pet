@@ -90,6 +90,8 @@ $env:PET_ID="doro"; npm run desktop:dev
 | `npm run lint`           | Biome lint（`apps` + `packages`）    |
 | `npm run format`         | Biome format 写回                    |
 | `npm run format:check`   | 仅检查格式                              |
+| `npm run audit:pets`     | 宠物资质/尺寸审计；guga 需 ffprobe 校验 VP9+alpha |
+| `npm run reencode:guga-alpha` | 将 guga WebM 重导为 VP9+alpha（需 ffmpeg） |
 
 ### 子包（在根目录用 `-w` 亦可）
 
@@ -134,6 +136,7 @@ pets/
 - 清单：`manifest.json` → guga、doro、elaina、homie、linnea、mambo、naruto、nezuko、phoebe、skirk、taffy、wukong
 - 配置：`@pet/schema` 规范化；`renderer: "atlas"` 会映射为 spritesheet 多帧
 - 人设：各宠 `persona.md`（统一中文结构：身份 / 性格 / 说话风格 / 禁忌）
+- **guga WebM 透明**：需 VP9 + `alpha_mode=1`。黑底/方块先分清「资源无 alpha」与「解码丢 alpha」（见 [apps/desktop/README.md](./apps/desktop/README.md) B-805）。重导：`npm run reencode:guga-alpha`；门禁：`npm run audit:pets`（需 ffprobe）
 - **新增角色**：建目录 → 写 `pet.json` + 素材 + `persona.md` → 更新 manifest →
   见 [SPRITESHEET_TEMPLATE.md](./pets/SPRITESHEET_TEMPLATE.md)
 

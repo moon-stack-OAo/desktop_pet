@@ -312,25 +312,42 @@ npm run desktop:dev
 
 ## WebM 透明失败策略（B-805）
 
-### 现象
+仅 **guga** 使用 `renderer: video`（WebM）。透明桌宠依赖三层同时正确：
 
-- **黑底 / 不透明**：Chromium + 系统解码器对 **VP8/VP9 + alpha** 支持不一致；部分 GPU/驱动下 alpha 被丢弃。
-- **完全无法播**：`MEDIA_ERR_DECODE` / `SRC_NOT_SUPPORTED`（损坏文件、编码档不支持等）。
+1. **资源本身带 alpha**（VP9 + WebM `alpha_mode=1` / yuva 轨）  
+2. **运行时解码保留 alpha**（Chromium/GPU 不丢透明轨）  
+3. **透明窗 + 页面透明底**（`window.js` + `styles.css`）
+
+### 两类问题务必区分
+
+| 类型 | 表现 | 根因 | 运行时能否自动发现 |
+|------|------|------|-------------------|
+| **A. 资源无 alpha** | 能播，但有方块/黑底/实心底 | 导出为 `yuv420p` 等不透明像素格式；或源素材即黑底未抠透明 | **否**（`error` 不触发）。用 `ffprobe` / `npm run audit:pets` 门禁 |
+| **B. 解码丢 alpha** | 资源已是 VP9+alpha，部分机器上仍黑底 | Chromium / 系统解码器 / GPU 驱动对 WebM alpha 支持不一致 | **否**（silent）。与 A 症状相似，需对照「同文件在 Chrome 是否透明」 |
+| **C. 硬解码/加载失败** | 无画面；status 提示 | `MEDIA_ERR_DECODE` / `SRC_NOT_SUPPORTED` 等 | **是** → `PetVideo` `onDecodeError` |
+| **D. autoplay 被拦** | 透明窗像「没有宠物」 | 打包后策略拦截；暂停时透明帧 0 可见像素 | 已用 `autoplay-policy` + muted + 首帧兜底缓解 |
+
+历史说明：仓库内 guga 源 MOV/旧 WebM 曾为 **HEVC/VP9 + `yuv420p`（无 alpha）**。黑底方块首先应按 **类型 A** 排查，勿一律归因为「解码丢 alpha」。  
+重导脚本：`scripts/reencode-guga-webm-alpha.ps1`（近黑 colorkey → VP9+alpha）。门禁：`npm run audit:pets`（需本机 `ffprobe`，检查 `codec=vp9` 且 `alpha_mode=1`）。
 
 ### 运行时（已实现）
 
 | 层级 | 行为 |
 |------|------|
-| `PetVideo` | `error` 事件 → 中文 `onDecodeError`（解码失败 / 格式不支持 / 网络等） |
+| `PetVideo` | `error` 事件 → 中文 `onDecodeError`（解码失败 / 格式不支持 / 网络等）——仅覆盖 **类型 C** |
 | `App` | `setStatus` 展示短提示；成功 `playing` 时清除解码类提示 |
 | 日志 | `[renderer] 视频解码/加载失败` + clip 名 |
+| 资源门禁 | `pet-pixel-audit.ps1` 对 guga 校验 VP9 + `alpha_mode=1`（无 ffprobe 时 WARN） |
 
-### 产品 / 资源建议（文档约定，不强制改资源）
+**未实现：** 静态 PNG 回退；「有画面但无透明」的运行时探测；clip 级失败自动切 idle。
 
-1. **优先 WebM VP9+alpha** 导出；避免仅 mov 进包（打包已排除 mov）。
-2. 单 clip 失败时：用户可见 status；FSM 仍可 `onClipEnded` 或用户切行为；**不**静默白屏。
-3. 极端环境：可回退 guga 其它 clip 或提示「当前环境无法解码该动画」；完整「静态 PNG 回退」可后续加。
-4. 开发自测：用系统自带影片应用 / Chrome 直接打开 `idle.webm` 验证透明。
+### 产品 / 资源建议
+
+1. **入库标准**：WebM **VP9 + alpha**（`alpha_mode=1`）；避免仅 mov 进包（打包已排除 `**/large/mov/**`）。  
+2. **自测透明**：用 **Chrome** 打开 `pets/guga/large/webm/idle.webm`（页面设透明底）；系统影片应用常忽略 alpha，**不能**作为透明是否成功的依据。  
+3. **ffprobe 注意**：默认 native VP9 解码器可能报 `pix_fmt=yuv420p` 并忽略 alpha 侧数据；以 **`TAG:alpha_mode=1`** 为准，或用 `ffmpeg -c:v libvpx-vp9 -i …` 解码验证。  
+4. 单 clip 硬失败：用户可见 status；FSM 仍可结束/切行为；**不**静默白屏。  
+5. 极端环境：后续可加静态 PNG 回退 / 切其它 clip。
 
 ## 打包分发（Windows）
 
