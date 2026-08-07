@@ -73,19 +73,52 @@ pets/
   `"walk": ["walk"]` 等形式
 - **显式 `behaviorMap` 优先于推导**
 
-现网 11 宠典型 `states` 行号（与图一致时即为真多帧）：
+现网 11 宠推荐 `states` 行号与参数（美术 9 行布局；**同 row 用 fps/loop 区分**）：
 
-| 状态                       | row | frames（典型） | loop  |
-|--------------------------|-----|------------|-------|
-| idle                     | 0   | 6          | true  |
-| walk / run-right         | 1   | 8          | true  |
-| run-left                 | 2   | 8          | true  |
-| eat / happy / waving     | 3   | 4          | false |
-| play / jumping           | 4   | 5          | true  |
-| sick / failed            | 5   | 8          | true  |
-| sleep / hungry / waiting | 6   | 6          | true  |
-| hunt / running           | 7   | 6          | true  |
-| review                   | 8   | 6          | true  |
+| 状态 | row | frames | fps | loop | 说明 |
+|------|-----|--------|-----|------|------|
+| idle | 0 | 6 | 4 | true | 待机 |
+| walk | 1 | 8 | 8 | true | 走路 |
+| run-right | 1 | 8 | **12** | true | 同 walk 行，更快 |
+| run-left | 2 | 8 | 8 | true | 左跑 |
+| eat | 3 | 4 | 8 | false | 喂食（独占 row3 语义） |
+| waving | 3 | 4 | 10 | false | 同 eat 行，略快；作 happy 回退 |
+| play | 4 | 5 | 8 | true | 玩耍 |
+| jumping | 4 | 5 | 10 | true | 同 play 行，略快 |
+| sick | 5 | 8 | 4 | true | 生病 |
+| failed | 5 | 8 | 6 | true | 同 sick 行，略快 |
+| sleep | 6 | 6 | 3 | true | 睡觉 |
+| hungry | 6 | 6 | 5 | true | 同 sleep 行（仅 fps 不同，美术未拆行） |
+| waiting | 6 | 6 | 4 | true | 同 sleep 行 |
+| hunt | 7 | 6 | 8 | true | 狩猎/忙碌 |
+| running | 7 | 6 | 12 | true | 同 hunt 行，更快 |
+| **happy** | **8** | 6 | 6 | false | **独立 row8**，勿与 eat 同 row |
+| review | 8 | 6 | 5 | true | 与 happy 同美术行，loop/fps 不同 |
+
+### 菜单行为绑定建议（显式 `behaviorMap`）
+
+**应写顶层显式 `behaviorMap`**（normalize 会尊重显式 map，优先于按动画名推导）。现网 11 宠统一推荐：
+
+```json
+"behaviorMap": {
+  "idle": ["idle"],
+  "walk": ["walk", "run-right"],
+  "eat": ["eat"],
+  "happy": ["happy", "review", "waving"],
+  "play": ["play", "jumping"],
+  "sleep": ["sleep"],
+  "hungry": ["hungry", "waiting"],
+  "sick": ["sick", "failed"],
+  "hunt": ["hunt", "running"]
+}
+```
+
+要点：
+
+- **happy 用独立 row（建议 row8 / review 行）**，不要与 eat 共用 row3；菜单「摸摸头」与「喂食」才能明显区分。
+- `happy` 优先 `happy(row8)`，其次 `review`，再 `waving`；`eat` 仅映射 `eat(row3)`。
+- 同 row 别名用更高 fps 做视觉区分（如 walk 8 vs run-right 12）。
+- 残留限制：hungry / sleep / waiting 仍同 row6，仅 fps 不同（待美术拆行）。
 
 目视抽检、错行修正见 [COMPLETION.md](./COMPLETION.md)。
 
@@ -179,17 +212,17 @@ sy = floor(linear / columns) * frameHeight
         "loop": true,
         "fps": 8
       },
-      "happy": {
-        "row": 3,
-        "frames": 4,
-        "loop": false,
-        "fps": 8
-      },
       "eat": {
         "row": 3,
         "frames": 4,
         "loop": false,
         "fps": 8
+      },
+      "happy": {
+        "row": 8,
+        "frames": 6,
+        "loop": false,
+        "fps": 6
       },
       "play": {
         "row": 4,
@@ -208,31 +241,25 @@ sy = floor(linear / columns) * frameHeight
         "frames": 6,
         "loop": true,
         "fps": 5
+      },
+      "review": {
+        "row": 8,
+        "frames": 6,
+        "loop": true,
+        "fps": 5
       }
     }
   },
   "behaviorMap": {
-    "idle": [
-      "idle"
-    ],
-    "walk": [
-      "walk"
-    ],
-    "happy": [
-      "happy"
-    ],
-    "eat": [
-      "eat"
-    ],
-    "play": [
-      "play"
-    ],
-    "sleep": [
-      "sleep"
-    ],
-    "hungry": [
-      "hungry"
-    ]
+    "idle": ["idle"],
+    "walk": ["walk", "run-right"],
+    "eat": ["eat"],
+    "happy": ["happy", "review", "waving"],
+    "play": ["play", "jumping"],
+    "sleep": ["sleep"],
+    "hungry": ["hungry", "waiting"],
+    "sick": ["sick", "failed"],
+    "hunt": ["hunt", "running"]
   },
   "ai": {
     "personaFile": "persona.md"

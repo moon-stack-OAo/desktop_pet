@@ -34,6 +34,60 @@ function formatErr(err) {
  */
 
 /**
+ * 显示主窗并关闭点击穿透，保证后续 UI 可点
+ * @param {TrayHost} host
+ */
+function showWindowInteractive(host) {
+  if (host.getIgnoreMouse()) {
+    host.applyIgnoreMouse(false);
+  }
+  const mainWindow = host.getMainWindow();
+  if (!mainWindow || mainWindow.isDestroyed()) return null;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+  return mainWindow;
+}
+
+/**
+ * 托盘：打开 AI 对话（放大窗口 + 通知渲染层）
+ * @param {TrayHost} host
+ */
+function openChatFromTray(host) {
+  const mainWindow = showWindowInteractive(host);
+  if (!mainWindow) {
+    log.warn('[tray] 打开对话失败：无主窗口');
+    return;
+  }
+  try {
+    const { expandWindowForUi } = require('./window');
+    expandWindowForUi(host);
+  } catch (err) {
+    log.warn('[tray] expandWindow 失败:', formatErr(err));
+  }
+  mainWindow.webContents.send(IPC.UI_OPEN_CHAT);
+}
+
+/**
+ * 托盘：打开 AI 设置
+ * @param {TrayHost} host
+ */
+function openAiSettingsFromTray(host) {
+  const mainWindow = showWindowInteractive(host);
+  if (!mainWindow) {
+    log.warn('[tray] 打开 AI 设置失败：无主窗口');
+    return;
+  }
+  try {
+    const { expandWindowForUi } = require('./window');
+    expandWindowForUi(host);
+  } catch (err) {
+    log.warn('[tray] expandWindow 失败:', formatErr(err));
+  }
+  mainWindow.webContents.send(IPC.UI_OPEN_AI_SETTINGS);
+}
+
+/**
  * 向渲染进程请求触发逻辑行为
  * @param {string} behavior
  * @param {TrayHost} host
@@ -54,17 +108,21 @@ function buildAppMenuTemplate(host) {
   const currentPetId = host.getCurrentPetId();
   const ignoreMouseEvents = host.getIgnoreMouse();
 
+  // 不用 radio：Windows 上已勾选项再次点击常不触发 click，且异步 rebuild 易丢事件
   /** @type {import('electron').MenuItemConstructorOptions[]} */
   const switchSub =
     catalogCache.length > 0
-      ? catalogCache.map((p) => ({
-          label: p.displayName || p.id,
-          type: /** @type {const} */ ('radio'),
-          checked: p.id === currentPetId,
-          click: () => {
-            void host.switchPet(p.id);
-          },
-        }))
+      ? catalogCache.map((p) => {
+          const isCurrent = p.id === currentPetId;
+          const name = p.displayName || p.id;
+          return {
+            label: isCurrent ? `✓ ${name}` : name,
+            id: `switch-pet-${p.id}`,
+            click: () => {
+              void host.switchPet(p.id);
+            },
+          };
+        })
       : [{ label: '（无可用宠物）', enabled: false }];
 
   /** @type {import('electron').MenuItemConstructorOptions[]} */
@@ -76,6 +134,15 @@ function buildAppMenuTemplate(host) {
   /** @type {import('electron').MenuItemConstructorOptions[]} */
   return [
     ...behaviorItems,
+    { type: 'separator' },
+    {
+      label: 'AI 对话',
+      click: () => openChatFromTray(host),
+    },
+    {
+      label: 'AI 设置…',
+      click: () => openAiSettingsFromTray(host),
+    },
     { type: 'separator' },
     {
       label: '静音切换',
@@ -115,7 +182,9 @@ function buildAppMenuTemplate(host) {
         const mainWindow = host.getMainWindow();
         if (!mainWindow) return;
         if (mainWindow.isVisible()) mainWindow.hide();
-        else mainWindow.show();
+        else {
+          showWindowInteractive(host);
+        }
       },
     },
     { type: 'separator' },
@@ -254,4 +323,7 @@ module.exports = {
   createTrayImage,
   createTray,
   notifyIgnoreMouseIfNeeded,
+  openChatFromTray,
+  openAiSettingsFromTray,
+  showWindowInteractive,
 };

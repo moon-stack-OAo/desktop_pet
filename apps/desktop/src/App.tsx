@@ -60,6 +60,24 @@ function PetApp() {
     setAiSettingsOpen(false);
   }, []);
 
+  // 托盘「AI 设置…」
+  useEffect(() => {
+    const unsub = window.petAPI?.onOpenAiSettings?.(() => {
+      openAiSettings();
+    });
+    return () => {
+      unsub?.();
+    };
+  }, [openAiSettings]);
+
+  // 对话/设置打开时保持放大窗；全部关闭后恢复宠物尺寸
+  useEffect(() => {
+    const uiOpen = chat.chatOpen || aiSettingsOpen;
+    if (!uiOpen) {
+      window.petAPI?.restorePetWindowSize?.();
+    }
+  }, [chat.chatOpen, aiSettingsOpen]);
+
   const petMenu = usePetMenu({
     chatOpen: chat.chatOpen,
     onCloseChat: chat.closeChat,
@@ -133,9 +151,14 @@ function PetApp() {
   const showName = payload?.displayName;
   const isSpritesheet = payload?.renderer === 'spritesheet';
   const sheet = payload?.spritesheet;
-  const videoSrc = currentClip?.url ?? payload?.idle?.url ?? '';
+  // 切宠瞬间 FSM 可能尚未就绪：必须回落到 idle，避免空白
+  const videoSrc =
+    currentClip?.url ||
+    payload?.clips?.idle?.url ||
+    payload?.idle?.url ||
+    '';
   const loop = currentClip ? currentClip.loop === true : true;
-  const clipName = state?.clip ?? 'idle';
+  const clipName = state?.clip || 'idle';
 
   const overlayText =
     status ||

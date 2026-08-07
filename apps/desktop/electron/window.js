@@ -71,6 +71,48 @@ function applyIgnoreMouse(ignore, host, opts = {}) {
 }
 
 /**
+ * 宠物默认窗尺寸（与 payload.size 对齐）
+ * @param {{ size?: { width?: number; height?: number } } | null | undefined} petPayload
+ */
+function resolvePetWindowSize(petPayload) {
+  const w = Math.max(140, Math.min(280, petPayload?.size?.width || 180));
+  const h = Math.max(140, Math.min(280, petPayload?.size?.height || 180));
+  return { w, h };
+}
+
+/**
+ * 对话 / AI 设置时放大窗口，便于操作小面板
+ * @param {{ getMainWindow: () => import('electron').BrowserWindow | null }} host
+ * @param {{ width?: number; height?: number }} [opts]
+ */
+function expandWindowForUi(host, opts = {}) {
+  const mainWindow = host.getMainWindow();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const w = Math.max(280, opts.width || 320);
+  const h = Math.max(320, opts.height || 380);
+  try {
+    mainWindow.setContentSize(w, h);
+  } catch {
+    mainWindow.setSize(w, h);
+  }
+  mainWindow.setAlwaysOnTop(true);
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+/**
+ * 恢复宠物默认尺寸
+ * @param {WindowHost} host
+ * @param {import('electron').Tray | null} [tray]
+ */
+function restorePetWindowSize(host, tray) {
+  const petPayload = host.getCurrentPayload();
+  if (!petPayload) return;
+  applyWindowChrome(petPayload, host, tray || null);
+}
+
+/**
  * 应用 payload 到窗口尺寸与标题
  * @param {import('../shared/pet-payload').PetPayload} petPayload
  * @param {WindowHost} host
@@ -79,8 +121,7 @@ function applyIgnoreMouse(ignore, host, opts = {}) {
 function applyWindowChrome(petPayload, host, tray) {
   const mainWindow = host.getMainWindow();
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  const w = Math.max(140, Math.min(280, petPayload.size?.width || 180));
-  const h = Math.max(140, Math.min(280, petPayload.size?.height || 180));
+  const { w, h } = resolvePetWindowSize(petPayload);
   try {
     mainWindow.setContentSize(w, h);
   } catch {
@@ -99,8 +140,7 @@ function applyWindowChrome(petPayload, host, tray) {
  */
 function createWindow(petPayload, host) {
   host.setCurrentPayload(petPayload);
-  const w = Math.max(140, Math.min(280, petPayload.size?.width || 180));
-  const h = Math.max(140, Math.min(280, petPayload.size?.height || 180));
+  const { w, h } = resolvePetWindowSize(petPayload);
   const { x, y } = getBottomRightPosition(w, h);
   const ignoreMouseEvents = host.getIgnoreMouse();
 
@@ -198,7 +238,10 @@ function createWindow(petPayload, host) {
 
 module.exports = {
   getBottomRightPosition,
+  resolvePetWindowSize,
   applyIgnoreMouse,
   applyWindowChrome,
+  expandWindowForUi,
+  restorePetWindowSize,
   createWindow,
 };

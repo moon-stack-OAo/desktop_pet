@@ -20,12 +20,18 @@ const IPC = {
   AI_CHAT: 'ai:chat',
   AI_GET_SETTINGS: 'ai:get-settings',
   AI_SAVE_SETTINGS: 'ai:save-settings',
+  /** 主进程 → 渲染：打开对话面板 */
+  UI_OPEN_CHAT: 'ui:open-chat',
+  /** 主进程 → 渲染：打开 AI 设置 */
+  UI_OPEN_AI_SETTINGS: 'ui:open-ai-settings',
 
   // —— 应用 / 窗口 ——
   APP_QUIT: 'app:quit',
   WINDOW_SET_IGNORE_MOUSE: 'window:set-ignore-mouse',
   WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse',
   WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
+  /** 渲染 → 主进程：对话/设置关闭后恢复宠物窗尺寸 */
+  WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
 
   // —— 自动更新 ——
   UPDATE_GET_STATE: 'update:get-state',

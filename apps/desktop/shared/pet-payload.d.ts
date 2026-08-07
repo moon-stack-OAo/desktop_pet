@@ -281,6 +281,10 @@ export interface PetAPI {
    * 保存 AI 设置（Key 经 safeStorage 加密写 userData）
    */
   saveAiSettings: (partial?: AiSettingsSaveInput) => Promise<OkResult>;
+  /** 托盘等请求打开对话；返回取消订阅 */
+  onOpenChat: (cb: () => void) => (() => void) | void;
+  /** 托盘等请求打开 AI 设置；返回取消订阅 */
+  onOpenAiSettings: (cb: () => void) => (() => void) | void;
   /** 退出应用 */
   quit: () => void;
 
@@ -292,6 +296,8 @@ export interface PetAPI {
   getIgnoreMouse: () => Promise<boolean>;
   /** 主进程（托盘等）变更穿透状态时通知；返回取消订阅 */
   onIgnoreMouseChanged: (cb: (ignore: boolean) => void) => (() => void) | void;
+  /** 对话/设置关闭后恢复宠物默认窗尺寸 */
+  restorePetWindowSize: () => void;
 
   // —— 自动更新 ——
   getUpdateState: () => Promise<UpdateState>;

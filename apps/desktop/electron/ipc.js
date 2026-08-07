@@ -36,6 +36,7 @@ function formatErr(err) {
  * @property {(ignore: boolean) => void} applyIgnoreMouse
  * @property {() => string} getPetName
  * @property {() => string} getPersonaText
+ * @property {() => void} [restorePetWindowSize]
  */
 
 /**
@@ -113,6 +114,12 @@ function registerIpc(host) {
   });
 
   ipcMain.handle(IPC.WINDOW_GET_IGNORE_MOUSE, () => host.getIgnoreMouse());
+
+  ipcMain.on(IPC.WINDOW_RESTORE_PET_SIZE, () => {
+    if (typeof host.restorePetWindowSize === 'function') {
+      host.restorePetWindowSize();
+    }
+  });
 }
 
 module.exports = {

@@ -109,17 +109,22 @@ export function usePet(): UsePetResult {
         setStatus('不支持切换宠物');
         return false;
       }
-      if (pet?.id === petId) return true;
+      const targetId = typeof petId === 'string' ? petId.trim() : '';
+      if (!targetId) {
+        setStatus('无效的宠物 id');
+        return false;
+      }
+      // 即使已是目标宠也走主进程强制重载（修复「切走后切不回 / 视频宠空白」）
       setLoadStatus('switching');
       setStatus('切换中…');
       try {
-        const result = await window.petAPI.switchPet(petId);
+        const result = await window.petAPI.switchPet(targetId);
         if (!result?.ok) {
           setStatus(result?.error || '切换失败');
           setLoadStatus(pet ? 'ready' : 'error');
           return false;
         }
-        // 主进程会再发 pet:ready；若同包返回 payload 也可立即应用
+        // 主进程会再发 pet:ready；同包 payload 立即应用，避免等事件
         if (result.payload) {
           applyPet(result.payload);
         }

@@ -27,6 +27,8 @@ export interface UseChatSessionOptions {
 export interface UseChatSessionResult {
   chatOpen: boolean;
   setChatOpen: (open: boolean) => void;
+  /** 打开对话面板 */
+  openChat: () => void;
   closeChat: () => void;
   handleChatSend: (message: string) => Promise<ChatSendResult>;
   handleChatAction: (action: string) => void;
@@ -57,6 +59,12 @@ export function useChatSession({
     setLastMode(null);
   }, [petId]);
 
+  /** 打开对话：关穿透（由主进程托盘侧处理）+ 通知前处理 */
+  const openChat = useCallback(() => {
+    onBeforeOpen?.();
+    setChatOpen(true);
+  }, [onBeforeOpen]);
+
   // 双击宠物打开对话面板
   useEffect(() => {
     const onDblClick = (e: MouseEvent) => {
@@ -69,12 +77,28 @@ export function useChatSession({
         return;
       }
       e.preventDefault();
-      onBeforeOpen?.();
-      setChatOpen(true);
+      // 双击时若穿透已开，先请求关闭穿透
+      void window.petAPI?.getIgnoreMouse?.().then((v) => {
+        if (v) window.petAPI?.setIgnoreMouse?.(false);
+      });
+      openChat();
     };
     document.addEventListener('dblclick', onDblClick);
     return () => document.removeEventListener('dblclick', onDblClick);
-  }, [onBeforeOpen]);
+  }, [openChat]);
+
+  // 托盘「AI 对话」+ 右键菜单 CustomEvent
+  useEffect(() => {
+    const unsub = window.petAPI?.onOpenChat?.(() => {
+      openChat();
+    });
+    const onCustom = () => openChat();
+    window.addEventListener('pet:open-chat', onCustom);
+    return () => {
+      unsub?.();
+      window.removeEventListener('pet:open-chat', onCustom);
+    };
+  }, [openChat]);
 
   const handleChatSend = useCallback(
     async (message: string): Promise<ChatSendResult> => {
@@ -154,6 +178,7 @@ export function useChatSession({
   return {
     chatOpen,
     setChatOpen,
+    openChat,
     closeChat,
     handleChatSend,
     handleChatAction,

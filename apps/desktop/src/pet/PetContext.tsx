@@ -154,13 +154,25 @@ export function PetProvider({ children }: PetProviderProps) {
     play: playVitals,
   } = useVitals(pet?.id);
 
+  // 切宠时先清 FSM，避免沿用上一只的 clip 名（spritesheet→guga 时尤其明显）
+  useEffect(() => {
+    fsmRef.current = null;
+    setFsmState(null);
+  }, [pet?.id]);
+
   // payload 就绪后创建 FSM；卸载时清理
   useEffect(() => {
-    const isSpritesheet = pet?.renderer === 'spritesheet';
+    if (!pet?.id) {
+      fsmRef.current = null;
+      setFsmState(null);
+      return;
+    }
+
+    const isSpritesheet = pet.renderer === 'spritesheet';
 
     /** video：用 clips；spritesheet：用 animations keys 作为 clips（loop 来自 animation） */
     const clipMeta: Record<string, { loop?: boolean }> = {};
-    if (isSpritesheet && pet?.spritesheet?.animations) {
+    if (isSpritesheet && pet.spritesheet?.animations) {
       for (const [name, anim] of Object.entries(pet.spritesheet.animations)) {
         const loop =
           anim && typeof anim === 'object' && 'loop' in anim
@@ -169,7 +181,7 @@ export function PetProvider({ children }: PetProviderProps) {
         clipMeta[name] = { loop };
       }
     }
-    if (pet?.clips) {
+    if (pet.clips) {
       for (const [name, info] of Object.entries(pet.clips)) {
         if (!clipMeta[name]) {
           clipMeta[name] = { loop: info.loop === true };
@@ -189,7 +201,7 @@ export function PetProvider({ children }: PetProviderProps) {
     }
 
     const fsm = new BehaviorFSM({
-      behaviorMap: pet?.behaviorMap ?? {},
+      behaviorMap: pet.behaviorMap ?? {},
       clips: clipMeta,
       defaultBehavior: 'idle',
       // loop 非 idle/hungry 等在 5–12s 超时回 idle（见 @pet/runtime）
@@ -211,7 +223,7 @@ export function PetProvider({ children }: PetProviderProps) {
     // 纯占位 walk→idle 会被 FSM fold 为 idle，request 仍可成功但无视觉变化；仍启调度无害。
     const hasWalk =
       !!clipMeta.walk ||
-      (pet?.behaviorMap?.walk ?? []).some((c) => !!clipMeta[c]);
+      (pet.behaviorMap?.walk ?? []).some((c) => !!clipMeta[c]);
     let scheduler: ReturnType<typeof createAutoScheduler> | null = null;
     if (hasWalk) {
       scheduler = createAutoScheduler(fsm, {
@@ -222,14 +234,17 @@ export function PetProvider({ children }: PetProviderProps) {
       scheduler.start();
       logInfo(
         '[renderer] AutoScheduler 已启动（walk）',
-        `renderer=${pet?.renderer || 'video'}`,
+        `renderer=${pet.renderer || 'video'}`,
+        `pet=${pet.id}`,
       );
     }
 
     return () => {
       scheduler?.stop();
       fsm.dispose();
-      fsmRef.current = null;
+      if (fsmRef.current === fsm) {
+        fsmRef.current = null;
+      }
     };
   }, [pet]);
 

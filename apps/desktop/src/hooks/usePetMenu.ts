@@ -85,12 +85,15 @@ export function usePetMenu({
       ];
       for (const p of pets) {
         const current = p.id === (payloadId || catalog?.currentId);
+        const label = p.displayName || p.id;
         items.push({
           id: `pet-${p.id}`,
-          label: current ? `✓ ${p.displayName}` : p.displayName,
+          label: current ? `✓ ${label}` : label,
           onClick: () => {
-            void switchPet(p.id);
+            // 先关菜单再切，避免小窗内菜单挡住切回后的 video 首帧
             setShowPetPicker(false);
+            closeMenu();
+            void switchPet(p.id);
           },
         });
       }
@@ -158,6 +161,18 @@ export function usePetMenu({
         onClick: () => setShowPetPicker(true),
       },
       {
+        id: 'ai-chat',
+        label: 'AI 对话',
+        onClick: () => {
+          void window.petAPI?.getIgnoreMouse?.().then((v) => {
+            if (v) window.petAPI?.setIgnoreMouse?.(false);
+          });
+          // 与托盘一致：通知主进程放大 + 打开（无托盘通道时本地双击逻辑由 onOpenAiSettings 旁路）
+          // 右键菜单在渲染层：直接由 App 的 chat.openChat 更合适，这里发自定义事件
+          window.dispatchEvent(new CustomEvent('pet:open-chat'));
+        },
+      },
+      {
         id: 'ai-settings',
         label: 'AI 设置…',
         onClick: () => onOpenAiSettings?.(),
@@ -178,6 +193,7 @@ export function usePetMenu({
     ];
   }, [
     catalog,
+    closeMenu,
     feed,
     ignoreMouse,
     muted,

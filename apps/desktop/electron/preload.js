@@ -18,10 +18,13 @@ const IPC = {
   AI_CHAT: 'ai:chat',
   AI_GET_SETTINGS: 'ai:get-settings',
   AI_SAVE_SETTINGS: 'ai:save-settings',
+  UI_OPEN_CHAT: 'ui:open-chat',
+  UI_OPEN_AI_SETTINGS: 'ui:open-ai-settings',
   APP_QUIT: 'app:quit',
   WINDOW_SET_IGNORE_MOUSE: 'window:set-ignore-mouse',
   WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse',
   WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
+  WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
   UPDATE_GET_STATE: 'update:get-state',
   UPDATE_CHECK: 'update:check',
   UPDATE_DOWNLOAD: 'update:download',
@@ -93,6 +96,25 @@ contextBridge.exposeInMainWorld('petAPI', {
   },
 
   getIgnoreMouse: () => ipcRenderer.invoke(IPC.WINDOW_GET_IGNORE_MOUSE),
+
+  /** 对话/设置关闭后恢复宠物默认窗尺寸 */
+  restorePetWindowSize: () => {
+    ipcRenderer.send(IPC.WINDOW_RESTORE_PET_SIZE);
+  },
+
+  /** @param {() => void} callback */
+  onOpenChat: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on(IPC.UI_OPEN_CHAT, handler);
+    return () => ipcRenderer.removeListener(IPC.UI_OPEN_CHAT, handler);
+  },
+
+  /** @param {() => void} callback */
+  onOpenAiSettings: (callback) => {
+    const handler = () => callback();
+    ipcRenderer.on(IPC.UI_OPEN_AI_SETTINGS, handler);
+    return () => ipcRenderer.removeListener(IPC.UI_OPEN_AI_SETTINGS, handler);
+  },
 
   /** @param {(ignore: boolean) => void} callback */
   onIgnoreMouseChanged: (callback) => {

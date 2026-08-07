@@ -19,6 +19,7 @@ const {
   applyIgnoreMouse,
   applyWindowChrome,
   createWindow,
+  restorePetWindowSize,
 } = require('./window');
 const { createTray, rebuildTrayMenu } = require('./tray-menu');
 const { registerIpc } = require('./ipc');
@@ -110,21 +111,38 @@ async function switchPet(petId) {
   if (!petId || typeof petId !== 'string') {
     return { ok: false, error: '无效的宠物 id' };
   }
+  const targetId = petId.trim();
+  if (!targetId) {
+    return { ok: false, error: '无效的宠物 id' };
+  }
   try {
-    const payload = await loadPetPayload(petId);
-    currentPetId = payload.id || petId;
+    // 切宠强制重载，避免缓存/同引用导致渲染层不刷新（尤其 video ↔ spritesheet）
+    const payload = await loadPetPayload(targetId, { force: true });
+    currentPetId = payload.id || targetId;
     currentPayload = payload;
     writePrefsPetId(currentPetId);
     applyWindowChrome(payload, buildHost(), tray);
     if (mainWindow && !mainWindow.isDestroyed()) {
+      // 关穿透，避免切宠后点不到、误以为没切回去
+      if (ignoreMouseEvents) {
+        applyIgnoreMouse(false, buildHost());
+      }
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
       mainWindow.webContents.send(IPC.PET_READY, payload);
     }
     rebuildTrayMenu(buildHost());
-    log.info('[pet] 已切换:', currentPetId, payload.displayName);
+    log.info(
+      '[pet] 已切换:',
+      currentPetId,
+      payload.displayName,
+      'renderer=',
+      payload.renderer,
+    );
     return { ok: true, payload };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    log.error('[pet] 切换失败:', message);
+    log.error('[pet] 切换失败:', targetId, message);
     return { ok: false, error: message };
   }
 }
@@ -148,6 +166,9 @@ app.whenReady().then(async () => {
       currentPayload?.displayName || currentPayload?.id || '小宠',
     getPersonaText: () =>
       (currentPayload?.ai && currentPayload.ai.personaText) || '',
+    restorePetWindowSize: () => {
+      restorePetWindowSize(buildHost(), tray);
+    },
   });
 
   try {
