@@ -1,7 +1,7 @@
 {
   "id": "wukong",
   "name": "Wukong",
-  "displayName": "Wukong",
+  "displayName": "Wukong / 悟空",
   "greeting": "俺老孙来也！",
   "description": "A tiny mythic Monkey King pet inspired by the public-domain Journey to the West figure.",
   "renderer": "atlas",

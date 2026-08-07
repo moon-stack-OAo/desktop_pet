@@ -3,7 +3,7 @@
   "name": "Naruto",
   "displayName": "Naruto",
   "greeting": "相信我！",
-  "description": "A restless chibi Shippuden shinobi pet with blond spikes, whisker marks, orange-black outfit, and stubborn never-give-up energy.",
+  "description": "A restless chibi shinobi pet with blond spikes, whisker marks, orange-black outfit, and stubborn never-give-up energy.",
   "renderer": "atlas",
   "colors": {
     "body": "#fff3e0",

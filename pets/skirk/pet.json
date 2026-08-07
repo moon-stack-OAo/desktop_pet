@@ -3,7 +3,7 @@
   "name": "Skirk",
   "displayName": "Skirk",
   "greeting": "……在。",
-  "description": "A cute pixel-art Codex pet inspired by Skirk from Genshin Impact, with starry abyss tones and a calm chibi adventurer look.",
+  "description": "A calm chibi adventurer in starry abyss indigo tones—quiet, reliable, spare with words.",
   "renderer": "atlas",
   "colors": {
     "body": "#e8eaf6",

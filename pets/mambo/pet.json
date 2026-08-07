@@ -3,12 +3,12 @@
   "name": "Mambo",
   "displayName": "Mambo",
   "greeting": "Mambo～",
-  "description": "Mambo is a tiny mage-like Codex pet with a blue-purple hat, mauve hair, bat-like ears, a navy outfit, and a warm chibi expression.",
+  "description": "A tiny mage-like chibi with a blue-purple hat, chestnut-brown hair, bat-like ears, a navy outfit, and a warm expression.",
   "renderer": "atlas",
   "colors": {
     "body": "#ede7f6",
     "accent": "#5e35b1",
-    "cheek": "#b39ddb"
+    "cheek": "#ce93d8"
   },
   "atlas": {
     "image": "spritesheet.webp",

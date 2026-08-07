@@ -3,7 +3,7 @@
   "name": "Taffy",
   "displayName": "Taffy",
   "greeting": "准备起飞！",
-  "description": "A tiny pixel chibi aviator girl pet with pink hair, round brass goggles with heart lenses, and a waist charm matching the plush face from the second reference.",
+  "description": "A tiny chibi aviator girl with pink hair, round brass goggles with heart lenses, and a small waist charm.",
   "renderer": "atlas",
   "colors": {
     "body": "#fce4ec",

@@ -3,7 +3,7 @@
   "name": "咕嘎",
   "version": "1.0.0",
   "greeting": "咕～我是咕嘎！",
-  "description": "视频动画桌宠（webm）",
+  "description": "暖黄圆滚的 chibi 视频桌宠，软萌贪吃，用 WebM 短动画陪在桌角。",
   "colors": {
     "body": "#ffe082",
     "accent": "#ffb300",

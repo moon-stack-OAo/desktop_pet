@@ -3,12 +3,12 @@
   "name": "Homie",
   "displayName": "Homie",
   "greeting": "Homie 在此！",
-  "description": "A tiny smug patriotic cape-wearing superhero companion.",
+  "description": "A tiny blond, smug cape-wearing chibi superhero with a red cape and blue suit.",
   "renderer": "atlas",
   "colors": {
-    "body": "#e3f2fd",
-    "accent": "#1565c0",
-    "cheek": "#90caf9"
+    "body": "#ffe0b2",
+    "accent": "#c62828",
+    "cheek": "#ffab91"
   },
   "atlas": {
     "image": "spritesheet.png",

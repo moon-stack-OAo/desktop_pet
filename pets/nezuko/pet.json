@@ -3,7 +3,7 @@
   "name": "Nezuko",
   "displayName": "Nezuko",
   "greeting": "嗯嗯……",
-  "description": "A cute Codex digital pet inspired by Nezuko Kamado.",
+  "description": "A soft pink bamboo-girl chibi pet—quiet, warm, and gently protective.",
   "renderer": "atlas",
   "colors": {
     "body": "#fce4ec",

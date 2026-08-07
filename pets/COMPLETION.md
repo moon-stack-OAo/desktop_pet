@@ -61,6 +61,13 @@
 | **P1** | 目视抽检 doro 等 1–2 只 walk/happy 与行号一致 | 👁 建议本地 `desktop:dev` 切宠验收 |
 | **P2** | 其余宠逐只目视；修正个别错行配置 | 可选后续 |
 
+## 未完成 / 美术债
+
+| 项 | 说明 | 状态 |
+|----|------|------|
+| **row6 三态共用** | 11 只 atlas 宠：`sleep` / `hungry` / `waiting` 同 row6，仅 fps 区分（3 / 5 / 4）；**无第 10 行**，不可假拆 | ⏳ 待美术新增行或重排网格后再改配置 |
+| 像素文案对齐 | linnea / homie / mambo 等 description、colors、persona 外观与 spritesheet 像素一致 | 🔄 持续按像素审计修正 |
+
 ## 相关文档
 
 - `pets/SPRITESHEET_TEMPLATE.md` — 精灵表配置手册（映射、切帧、新增模板）

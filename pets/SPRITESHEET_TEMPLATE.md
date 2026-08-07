@@ -88,8 +88,8 @@ pets/
 | sick | 5 | 8 | 4 | true | 生病 |
 | failed | 5 | 8 | 6 | true | 同 sick 行，略快 |
 | sleep | 6 | 6 | 3 | true | 睡觉 |
-| hungry | 6 | 6 | 5 | true | 同 sleep 行（仅 fps 不同，美术未拆行） |
-| waiting | 6 | 6 | 4 | true | 同 sleep 行 |
+| hungry | 6 | 6 | 5 | true | **美术债**：与 sleep/waiting 共用 row6，仅 fps 区分 |
+| waiting | 6 | 6 | 4 | true | **美术债**：与 sleep/hungry 共用 row6，仅 fps 区分 |
 | hunt | 7 | 6 | 8 | true | 狩猎/忙碌 |
 | running | 7 | 6 | 12 | true | 同 hunt 行，更快 |
 | **happy** | **8** | 6 | 6 | false | **独立 row8**，勿与 eat 同 row |
@@ -118,9 +118,10 @@ pets/
 - **happy 用独立 row（建议 row8 / review 行）**，不要与 eat 共用 row3；菜单「摸摸头」与「喂食」才能明显区分。
 - `happy` 优先 `happy(row8)`，其次 `review`，再 `waving`；`eat` 仅映射 `eat(row3)`。
 - 同 row 别名用更高 fps 做视觉区分（如 walk 8 vs run-right 12）。
-- 残留限制：hungry / sleep / waiting 仍同 row6，仅 fps 不同（待美术拆行）。
+- **美术债（row6）**：现网 11 只 atlas 宠的 `sleep` / `hungry` / `waiting` **共用 row6**，无第 10 行美术资源。运行时仅靠 **fps 区分**（sleep=3 / hungry=5 / waiting=4），**禁止**在无新 spritesheet 行时把 hungry 指到不存在的 row。
+- **待办**：拆行需美术 **新增第 10 行**（或整体重排 10+ 行网格）后，再改各宠 `states` 与 `behaviorMap`；在此之前保持三态同 row + fps 区分。
 
-目视抽检、错行修正见 [COMPLETION.md](./COMPLETION.md)。
+  目视抽检、错行修正与债项跟踪见 [COMPLETION.md](./COMPLETION.md)。
 
 ---
 

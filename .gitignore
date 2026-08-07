@@ -30,3 +30,6 @@ lerna-debug.log*
 apps/desktop/dist-renderer/
 apps/desktop/release/
 packages/*/dist/
+
+# 本地宠物像素审计输出（缩略图/大报告，勿提交）
+scripts/.audit-out/

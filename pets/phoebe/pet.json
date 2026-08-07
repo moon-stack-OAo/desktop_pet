@@ -3,7 +3,7 @@
   "name": "Phoebe",
   "displayName": "Phoebe / 菲比",
   "greeting": "菲比来守护你啦。",
-  "description": "A compact Codex digital pet inspired by Phoebe from Wuthering Waves, with pale golden hair, large violet eyes, rosy cheeks, and a simplified white-blue-black cleric outfit.",
+  "description": "A compact guardian chibi with pale golden hair, large violet eyes, rosy cheeks, and a simplified white-blue-black cleric outfit.",
   "renderer": "atlas",
   "colors": {
     "body": "#fffde7",
