@@ -107,16 +107,12 @@ jobs:
           ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/
           ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
 
+      # typecheck 会先 build packages（dist 未入库，CI 干净环境必须先构建）
       - name: Typecheck
         run: npm run typecheck
 
       - name: Pet-asset path smoke
         run: npm run test:pet-asset
-
-      - name: Build packages (schema / runtime)
-        run: |
-          npm run build -w @pet/schema
-          npm run build -w @pet/runtime
 
       - name: Build renderer
         run: npm run build:renderer -w @pet/desktop

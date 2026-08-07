@@ -35,6 +35,7 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # typecheck 内含 build:packages（@pet/runtime dist 供 desktop 解析类型）
       - name: Typecheck
         run: npm run typecheck
 

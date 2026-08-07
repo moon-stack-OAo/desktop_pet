@@ -6,7 +6,8 @@
     "apps/*"
   ],
   "scripts": {
-    "typecheck": "npm run typecheck -w @pet/schema && npm run typecheck -w @pet/runtime && npm run typecheck -w @pet/desktop",
+    "build:packages": "npm run build -w @pet/schema && npm run build -w @pet/runtime",
+    "typecheck": "npm run build:packages && npm run typecheck -w @pet/schema && npm run typecheck -w @pet/runtime && npm run typecheck -w @pet/desktop",
     "typecheck:schema": "npm run typecheck -w @pet/schema",
     "typecheck:runtime": "npm run typecheck -w @pet/runtime",
     "typecheck:desktop": "npm run typecheck -w @pet/desktop",
