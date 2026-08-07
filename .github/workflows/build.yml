@@ -130,7 +130,7 @@ jobs:
         shell: bash
         run: |
           ls -la apps/desktop/release || true
-          find apps/desktop/release -maxdepth 2 -type f \( -name '*.exe' -o -name '*.yml' -o -name '*.blockmap' \) -print || true
+          find apps/desktop/release -maxdepth 2 -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.yml' -o -name '*.blockmap' \) -print || true
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -138,6 +138,7 @@ jobs:
           name: desktop_pet-windows-${{ steps.ver.outputs.tag }}
           path: |
             apps/desktop/release/*.exe
+            apps/desktop/release/*.zip
             apps/desktop/release/*.yml
             apps/desktop/release/*.blockmap
           if-no-files-found: error
@@ -163,9 +164,10 @@ jobs:
           # 以 CHANGELOG 对应版本正文为主；并附带 GitHub 自动生成的提交摘要
           body_path: release-notes.md
           generate_release_notes: true
-          # latest.yml / blockmap 为 electron-updater 必需
+          # latest.yml / blockmap 为 electron-updater 必需；zip 为解压分发
           files: |
             apps/desktop/release/*.exe
+            apps/desktop/release/*.zip
             apps/desktop/release/*.yml
             apps/desktop/release/*.blockmap
         env:

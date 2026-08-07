@@ -99,7 +99,7 @@
           "arch": ["x64"]
         },
         {
-          "target": "portable",
+          "target": "zip",
           "arch": ["x64"]
         }
       ],
@@ -112,10 +112,8 @@
       "allowToChangeInstallationDirectory": true,
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
-    "portable": {
-      "artifactName": "${productName}-${version}-portable.${ext}",
-      "unpackDirName": "desktop_pet-portable",
-      "requestExecutionLevel": "user"
+    "zip": {
+      "artifactName": "${productName}-${version}-win-x64.${ext}"
     },
     "publish": [
       {

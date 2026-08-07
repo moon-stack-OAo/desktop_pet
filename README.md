@@ -82,7 +82,7 @@ $env:PET_ID="doro"; npm run desktop:dev
 | `npm run desktop:dev`    | 开发：Vite HMR + Electron             |
 | `npm run desktop`        | 构建渲染层后启动                           |
 | `npm run desktop:pack`   | 解包目录（`electron-builder --dir`）     |
-| `npm run desktop:dist`   | Windows NSIS + portable            |
+| `npm run desktop:dist`   | Windows NSIS 安装包 + zip 解压版         |
 | `npm run typecheck`      | schema + runtime + desktop         |
 | `npm test`               | 全部单测（schema / runtime / desktop）   |
 | `npm run smoke`          | runtime smoke + pet-asset 路径 smoke |
@@ -155,7 +155,7 @@ npm run desktop
 # 验证打包目录 → apps/desktop/release/win-unpacked/
 npm run desktop:pack
 
-# 安装包 + portable → apps/desktop/release/*.exe
+# 安装包 + zip → apps/desktop/release/
 npm run desktop:dist
 ```
 

@@ -125,7 +125,7 @@ npm start          # 仅 electron .（需已有 dist-renderer）
 | 包  | `npm run pack`           | 构建依赖 + renderer 后 `electron-builder --dir`                              |
 | 包  | `npm run dist`           | 构建依赖 + renderer 后 `electron-builder --win`                              |
 | 根  | `npm run desktop:pack`   | 解包目录打包（快速验证）                                                            |
-| 根  | `npm run desktop:dist`   | Windows 安装包 + portable                                                  |
+| 根  | `npm run desktop:dist`   | Windows NSIS 安装包 + zip 解压版                                              |
 
 ### 类型检查（三配置）
 
@@ -351,7 +351,7 @@ npm run desktop:dev
 
 ## 打包分发（Windows）
 
-使用 [electron-builder](https://www.electron.build/) 产出 NSIS 安装包与 portable 便携版。
+使用 [electron-builder](https://www.electron.build/) 产出 NSIS 安装包与 zip 解压版（不再发布 portable）。
 
 ### 命令
 
@@ -362,7 +362,7 @@ npm run desktop:dev
 npm run desktop:pack
 # 等价：npm run pack -w @pet/desktop
 
-# 完整 Windows 安装包 + portable
+# 完整 Windows NSIS + zip
 npm run desktop:dist
 # 等价：npm run dist -w @pet/desktop
 ```
@@ -372,16 +372,15 @@ npm run desktop:dist
 | 脚本             | 说明                                                           |
 |----------------|--------------------------------------------------------------|
 | `npm run pack` | 先 build schema/runtime + renderer，再 `electron-builder --dir` |
-| `npm run dist` | 同上，再 `electron-builder --win`（nsis + portable）               |
+| `npm run dist` | 同上，再 `electron-builder --win`（nsis + zip）                      |
 
 ### 产物位置
 
 ```
 apps/desktop/release/
-├── win-unpacked/                # pack / dist 的解包目录，可直接运行 desktop_pet.exe
 ├── desktop_pet-Setup-x.x.x.exe       # NSIS 安装包（dist）
-├── desktop_pet-x.x.x-portable.exe    # portable 便携版（dist，双击即用）
-└── win-unpacked/desktop_pet.exe      # 解包调试（pack / dist 均有）
+├── desktop_pet-x.x.x-win-x64.zip     # zip 解压版（dist，解压即用）
+└── win-unpacked/                     # pack / dist 的解包目录，可直接运行 desktop_pet.exe
 ```
 
 ### 打包路径说明
@@ -425,7 +424,7 @@ apps/desktop/release/
 
 | 项 | 现状 | 后续计划 |
 |----|------|----------|
-| **目标产物** | **nsis** + **portable**（x64） | portable 固定解压目录 `desktop_pet-portable`；产物名 `*-portable.exe` |
+| **目标产物** | **nsis** + **zip**（x64） | 安装包 `*-Setup-*.exe`；解压包 `*-win-x64.zip`（无 portable） |
 | **NSIS** | `oneClick: false`，可改安装目录 | 稳定后再考虑一键安装默认 |
 | **自动更新** | `electron-updater` + `publish.provider: github`（`moon-stack-OAo/desktop_pet`） | 需 GitHub Release 资产命名与 builder 一致；未 TAG 前不发正式更新通道 |
 | **代码签名** | **`signAndEditExecutable: false`**，**当前无 Authenticode 签名** | 取得证书后：开开发人员模式 → 去掉该开关 → 配置 `certificateSubjectName` / CI 密钥；未签名时 SmartScreen 可能告警属预期 |
@@ -457,7 +456,7 @@ apps/desktop/release/
 4. **打包**：`npm run desktop:pack` 自测 `win-unpacked`；通过后 `npm run desktop:dist`。
 5. **冒烟**：启动 / 切宠 / 托盘 / 对话（本地徽标）/ guga 视频 / 更新入口（packaged）。
 6. **签名**（若本版仍跳过）：在 Release 说明写明「未代码签名」。
-7. **TAG / Release**：仅在准备对外版本时打 TAG；上传 nsis + portable；确认 updater 能解析到该版本。
+7. **TAG / Release**：仅在准备对外版本时打 TAG；上传 nsis + zip；确认 updater 能解析到该版本。
 
 ## 用户数据（prefs / localStorage）
 
