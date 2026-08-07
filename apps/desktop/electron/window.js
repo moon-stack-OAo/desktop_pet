@@ -156,15 +156,28 @@ function injectVisibilityChrome(win) {
 /**
  * 强制显示主窗：关穿透、恢复最小化、校正屏外、置顶聚焦。
  * 供托盘单击 / 「显示」/ 启动兜底使用，解决「有托盘无小窗」。
- * @param {WindowHost} host
- * @param {{ relocate?: boolean; focus?: boolean }} [opts]
+ * host 只需最小能力（TrayHost / WindowHost 均可）。
+ * @param {{
+ *   getMainWindow: () => import('electron').BrowserWindow | null;
+ *   getIgnoreMouse: () => boolean;
+ *   getCurrentPayload: () => import('../shared/pet-payload').PetPayload | null;
+ *   setIgnoreMouse?: (v: boolean) => void;
+ *   applyIgnoreMouse?: (ignore: boolean) => void;
+ *   onRebuildTrayMenu?: () => void;
+ * }} host
+ * @param {{ relocate?: boolean; focus?: boolean; quiet?: boolean }} [opts]
  * @returns {import('electron').BrowserWindow | null}
  */
 function revealMainWindow(host, opts = {}) {
   const mainWindow = host.getMainWindow();
   if (!mainWindow || mainWindow.isDestroyed()) return null;
   if (host.getIgnoreMouse()) {
-    applyIgnoreMouse(false, host);
+    // TrayHost 自带 applyIgnoreMouse；WindowHost 走本模块 applyIgnoreMouse
+    if (typeof host.applyIgnoreMouse === 'function') {
+      host.applyIgnoreMouse(false);
+    } else if (typeof host.setIgnoreMouse === 'function') {
+      applyIgnoreMouse(false, /** @type {WindowHost} */ (host));
+    }
   }
   const { w, h } = resolvePetWindowSize(host.getCurrentPayload());
   // relocate 默认 true：托盘唤回时挪到光标所在屏；启动兜底可传 false 只 show
