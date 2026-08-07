@@ -20,8 +20,11 @@ body,
   align-items: center;
   justify-content: center;
   background: transparent;
-  /* 整窗可拖拽 */
-  -webkit-app-region: drag;
+  /*
+   * 勿用 -webkit-app-region: drag：Windows 上会把右键交给系统标题菜单，
+   * 自定义 contextmenu 收不到。拖窗改由 petAPI.startWindowDrag。
+   */
+  -webkit-app-region: no-drag;
   cursor: grab;
   position: relative;
 }
@@ -35,8 +38,7 @@ body,
   user-select: none;
   -webkit-user-select: none;
   -webkit-user-drag: none;
-  /* 视频本身不拦截拖拽 */
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
 }
 
 /* 精灵表：居中、透明底、object-fit contain */
@@ -47,7 +49,7 @@ body,
   pointer-events: none;
   user-select: none;
   -webkit-user-select: none;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   display: flex;
   align-items: center;
   justify-content: center;

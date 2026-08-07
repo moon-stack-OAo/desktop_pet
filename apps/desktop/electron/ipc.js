@@ -120,6 +120,53 @@ function registerIpc(host) {
       host.restorePetWindowSize();
     }
   });
+
+  /**
+   * 自定义拖窗状态（按 webContents.id）
+   * @type {Map<number, { originX: number; originY: number; startScreenX: number; startScreenY: number }>}
+   */
+  const dragState = new Map();
+
+  // 自定义拖窗：避免 -webkit-app-region:drag 在 Windows 上弹出系统菜单
+  ipcMain.on(IPC.WINDOW_DRAG_START, (event, payload) => {
+    try {
+      const { BrowserWindow } = require('electron');
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (!win || win.isDestroyed()) return;
+      const screenX =
+        payload && typeof payload.screenX === 'number' ? payload.screenX : 0;
+      const screenY =
+        payload && typeof payload.screenY === 'number' ? payload.screenY : 0;
+      const b = win.getBounds();
+      dragState.set(event.sender.id, {
+        originX: b.x,
+        originY: b.y,
+        startScreenX: screenX,
+        startScreenY: screenY,
+      });
+    } catch (err) {
+      log.warn('[window] drag-start 失败:', formatErr(err));
+    }
+  });
+
+  ipcMain.on(IPC.WINDOW_DRAG_MOVE, (event, payload) => {
+    try {
+      const { BrowserWindow } = require('electron');
+      const win = BrowserWindow.fromWebContents(event.sender);
+      if (!win || win.isDestroyed()) return;
+      const st = dragState.get(event.sender.id);
+      if (!st) return;
+      const screenX =
+        payload && typeof payload.screenX === 'number' ? payload.screenX : 0;
+      const screenY =
+        payload && typeof payload.screenY === 'number' ? payload.screenY : 0;
+      const nx = Math.round(st.originX + (screenX - st.startScreenX));
+      const ny = Math.round(st.originY + (screenY - st.startScreenY));
+      win.setPosition(nx, ny);
+    } catch (err) {
+      log.warn('[window] drag-move 失败:', formatErr(err));
+    }
+  });
 }
 
 module.exports = {

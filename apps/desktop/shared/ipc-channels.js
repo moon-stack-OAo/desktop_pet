@@ -32,6 +32,9 @@ const IPC = {
   WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
   /** 渲染 → 主进程：对话/设置关闭后恢复宠物窗尺寸 */
   WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
+  /** 渲染 → 主进程：自定义拖窗开始 / 移动（避免 app-region:drag 抢走右键） */
+  WINDOW_DRAG_START: 'window:drag-start',
+  WINDOW_DRAG_MOVE: 'window:drag-move',
 
   // —— 自动更新 ——
   UPDATE_GET_STATE: 'update:get-state',

@@ -25,6 +25,8 @@ const IPC = {
   WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse',
   WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed',
   WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size',
+  WINDOW_DRAG_START: 'window:drag-start',
+  WINDOW_DRAG_MOVE: 'window:drag-move',
   UPDATE_GET_STATE: 'update:get-state',
   UPDATE_CHECK: 'update:check',
   UPDATE_DOWNLOAD: 'update:download',
@@ -100,6 +102,30 @@ contextBridge.exposeInMainWorld('petAPI', {
   /** 对话/设置关闭后恢复宠物默认窗尺寸 */
   restorePetWindowSize: () => {
     ipcRenderer.send(IPC.WINDOW_RESTORE_PET_SIZE);
+  },
+
+  /**
+   * 自定义拖窗：左键按下时传入屏幕坐标
+   * @param {number} screenX
+   * @param {number} screenY
+   */
+  startWindowDrag: (screenX, screenY) => {
+    ipcRenderer.send(IPC.WINDOW_DRAG_START, {
+      screenX: Number(screenX) || 0,
+      screenY: Number(screenY) || 0,
+    });
+  },
+
+  /**
+   * 拖动中：传入当前屏幕坐标
+   * @param {number} screenX
+   * @param {number} screenY
+   */
+  moveWindowDrag: (screenX, screenY) => {
+    ipcRenderer.send(IPC.WINDOW_DRAG_MOVE, {
+      screenX: Number(screenX) || 0,
+      screenY: Number(screenY) || 0,
+    });
   },
 
   /** @param {() => void} callback */

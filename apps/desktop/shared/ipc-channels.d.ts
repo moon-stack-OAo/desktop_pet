@@ -19,6 +19,8 @@ export interface IpcChannels {
   readonly WINDOW_GET_IGNORE_MOUSE: 'window:get-ignore-mouse';
   readonly WINDOW_IGNORE_MOUSE_CHANGED: 'window:ignore-mouse-changed';
   readonly WINDOW_RESTORE_PET_SIZE: 'window:restore-pet-size';
+  readonly WINDOW_DRAG_START: 'window:drag-start';
+  readonly WINDOW_DRAG_MOVE: 'window:drag-move';
   readonly UPDATE_GET_STATE: 'update:get-state';
   readonly UPDATE_CHECK: 'update:check';
   readonly UPDATE_DOWNLOAD: 'update:download';
@@ -49,6 +51,8 @@ export const WINDOW_SET_IGNORE_MOUSE: IpcChannels['WINDOW_SET_IGNORE_MOUSE'];
 export const WINDOW_GET_IGNORE_MOUSE: IpcChannels['WINDOW_GET_IGNORE_MOUSE'];
 export const WINDOW_IGNORE_MOUSE_CHANGED: IpcChannels['WINDOW_IGNORE_MOUSE_CHANGED'];
 export const WINDOW_RESTORE_PET_SIZE: IpcChannels['WINDOW_RESTORE_PET_SIZE'];
+export const WINDOW_DRAG_START: IpcChannels['WINDOW_DRAG_START'];
+export const WINDOW_DRAG_MOVE: IpcChannels['WINDOW_DRAG_MOVE'];
 export const UPDATE_GET_STATE: IpcChannels['UPDATE_GET_STATE'];
 export const UPDATE_CHECK: IpcChannels['UPDATE_CHECK'];
 export const UPDATE_DOWNLOAD: IpcChannels['UPDATE_DOWNLOAD'];

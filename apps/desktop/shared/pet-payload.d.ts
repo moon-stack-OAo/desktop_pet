@@ -298,6 +298,12 @@ export interface PetAPI {
   onIgnoreMouseChanged: (cb: (ignore: boolean) => void) => (() => void) | void;
   /** 对话/设置关闭后恢复宠物默认窗尺寸 */
   restorePetWindowSize: () => void;
+  /**
+   * 自定义拖窗：pointerdown 调 start，pointermove 调 move（屏幕坐标）。
+   * 替代 CSS -webkit-app-region: drag，避免 Windows 右键系统菜单。
+   */
+  startWindowDrag: (screenX: number, screenY: number) => void;
+  moveWindowDrag: (screenX: number, screenY: number) => void;
 
   // —— 自动更新 ——
   getUpdateState: () => Promise<UpdateState>;

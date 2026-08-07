@@ -12,9 +12,11 @@ import {useChatSession} from './hooks/useChatSession';
 import {useDebugBehaviors} from './hooks/useDebugBehaviors';
 import {useIgnoreMouse} from './hooks/useIgnoreMouse';
 import {usePetMenu} from './hooks/usePetMenu';
+import {useWindowDrag} from './hooks/useWindowDrag';
 import {PetProvider, usePetController} from './pet/PetContext';
 
 function PetApp() {
+  useWindowDrag();
   const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
   const {
     payload,

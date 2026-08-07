@@ -11,7 +11,14 @@ export interface PetStageProps {
  */
 export default function PetStage({ displayName, children }: PetStageProps) {
   return (
-    <div className="stage" title="拖拽移动 · 双击对话 · 右键菜单">
+    <div
+      className="stage"
+      title="拖拽移动 · 双击对话 · 右键菜单"
+      onContextMenu={(e) => {
+        // 舞台层再挡一层系统菜单
+        e.preventDefault();
+      }}
+    >
       {displayName ? (
         <div className="badge" aria-hidden>
           {displayName}

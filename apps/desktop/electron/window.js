@@ -155,6 +155,8 @@ function createWindow(petPayload, host) {
     hasShadow: false,
     resizable: false,
     skipTaskbar: true,
+    // 无边框窗禁用系统窗口菜单（右键标题区/拖拽区时的原生菜单）
+    autoHideMenuBar: true,
     backgroundColor: '#00000000',
     title: petPayload.displayName || petPayload.id || 'desktop_pet',
     webPreferences: {
@@ -165,6 +167,11 @@ function createWindow(petPayload, host) {
       webSecurity: true,
     },
   });
+  try {
+    mainWindow.setMenu(null);
+  } catch {
+    /* ignore */
+  }
 
   host.setMainWindow(mainWindow);
 

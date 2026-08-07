@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 
 export interface ContextMenuState {
   open: boolean;
@@ -55,7 +55,9 @@ export function useContextQuit(options: UseContextQuitOptions = {}): {
 
   useEffect(() => {
     const onContextMenu = (e: MouseEvent) => {
+      // 必须拦截系统/Chromium 默认菜单（无边框窗上尤其容易冒出原生项）
       e.preventDefault();
+      e.stopPropagation();
       const t = e.target as HTMLElement | null;
       // 聊天 / 设置面板内不弹应用菜单
       if (t?.closest?.('.chat-panel, .ai-settings-panel, input, textarea')) {
@@ -83,11 +85,14 @@ export function useContextQuit(options: UseContextQuitOptions = {}): {
       });
     };
 
-    document.addEventListener('contextmenu', onContextMenu);
+    // 捕获阶段优先于默认行为
+    document.addEventListener('contextmenu', onContextMenu, true);
+    window.addEventListener('contextmenu', onContextMenu, true);
     document.addEventListener('keydown', onKeyDown);
 
     return () => {
-      document.removeEventListener('contextmenu', onContextMenu);
+      document.removeEventListener('contextmenu', onContextMenu, true);
+      window.removeEventListener('contextmenu', onContextMenu, true);
       document.removeEventListener('keydown', onKeyDown);
     };
   }, []);

@@ -4,7 +4,7 @@
 
 'use strict';
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const log = require('./logger');
 const { readPetPrefs, writePetPrefs } = require('./prefs');
 const {
@@ -38,6 +38,13 @@ try {
 
 // 须在 app ready 之前注册特权
 registerPetAssetSchemePrivileges();
+
+// 去掉默认应用菜单，避免无边框窗右键弹出系统/原生菜单
+try {
+  Menu.setApplicationMenu(null);
+} catch {
+  /* ignore */
+}
 
 /** @type {import('electron').BrowserWindow | null} */
 let mainWindow = null;
