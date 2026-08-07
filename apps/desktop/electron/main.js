@@ -176,6 +176,9 @@ app.whenReady().then(async () => {
     restorePetWindowSize: () => {
       restorePetWindowSize(buildHost(), tray);
     },
+    // 右键原生菜单需要窗体与当前载荷
+    getMainWindow: () => mainWindow,
+    getCurrentPayload: () => currentPayload,
   });
 
   try {

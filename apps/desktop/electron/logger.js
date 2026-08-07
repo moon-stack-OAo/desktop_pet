@@ -3,9 +3,14 @@
  *
  * 开发判定：ELECTRON_DEV=1 || NODE_ENV=development || !app.isPackaged
  * 强制：PET_LOG_LEVEL=debug|info|warn|error
+ *
+ * Windows：控制台默认 CP936，Node 按 UTF-8 写中文会乱码；
+ * 启动时 chcp 65001 + stdout/stderr utf8（PET_CONSOLE_UTF8=0 可关闭）
  */
 
 'use strict';
+
+const { execSync } = require('child_process');
 
 /** @typedef {'debug' | 'info' | 'warn' | 'error'} LogLevel */
 
@@ -16,6 +21,44 @@ const LEVEL_ORDER = {
   warn: 30,
   error: 40,
 };
+
+/**
+ * Windows 控制台切到 UTF-8，避免「已加载」等中文变成 
+ * 与当前控制台会话绑定，同窗后续子进程也受益
+ */
+function ensureWindowsConsoleUtf8() {
+  if (process.platform !== 'win32') return;
+  if (process.env.PET_CONSOLE_UTF8 === '0') return;
+  const g = /** @type {{ __petConsoleUtf8?: boolean }} */ (global);
+  if (g.__petConsoleUtf8) return;
+  g.__petConsoleUtf8 = true;
+  try {
+    execSync('chcp 65001', {
+      stdio: 'ignore',
+      windowsHide: true,
+    });
+  } catch {
+    /* 无控制台或权限不足时忽略 */
+  }
+  try {
+    if (
+      process.stdout &&
+      typeof process.stdout.setDefaultEncoding === 'function'
+    ) {
+      process.stdout.setDefaultEncoding('utf8');
+    }
+    if (
+      process.stderr &&
+      typeof process.stderr.setDefaultEncoding === 'function'
+    ) {
+      process.stderr.setDefaultEncoding('utf8');
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+ensureWindowsConsoleUtf8();
 
 /**
  * @returns {boolean}

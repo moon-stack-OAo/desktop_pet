@@ -8,6 +8,7 @@ const { app, ipcMain } = require('electron');
 const log = require('./logger');
 const { handleAiChat } = require('./ai-chat');
 const { loadAiSettings, saveAiSettings } = require('./ai-settings');
+const { popupPetContextMenu } = require('./tray-menu');
 const { IPC } = require('../shared/ipc-channels');
 
 /**
@@ -37,6 +38,8 @@ function formatErr(err) {
  * @property {() => string} getPetName
  * @property {() => string} getPersonaText
  * @property {() => void} [restorePetWindowSize]
+ * @property {() => import('electron').BrowserWindow | null} [getMainWindow]
+ * @property {() => { displayName?: string; id?: string } | null} [getCurrentPayload]
  */
 
 /**
@@ -107,6 +110,44 @@ function registerIpc(host) {
 
   ipcMain.on(IPC.APP_QUIT, () => {
     app.quit();
+  });
+
+  // 宠物小窗右键：原生 Menu.popup（与托盘菜单同源）
+  ipcMain.on(IPC.PET_POPUP_CONTEXT_MENU, (event, payload) => {
+    try {
+      const { BrowserWindow } = require('electron');
+      const win =
+        (typeof host.getMainWindow === 'function' && host.getMainWindow()) ||
+        BrowserWindow.fromWebContents(event.sender);
+      if (!win || win.isDestroyed()) return;
+
+      /** @type {import('./tray-menu').TrayHost} */
+      const trayHost = {
+        getMainWindow: () => win,
+        getTray: () => null,
+        setTray: () => {},
+        getCatalog: () => host.getCatalog(),
+        getCurrentPetId: () => host.getCurrentPetId(),
+        getCurrentPayload: () =>
+          typeof host.getCurrentPayload === 'function'
+            ? host.getCurrentPayload()
+            : null,
+        getIgnoreMouse: () => host.getIgnoreMouse(),
+        switchPet: (petId) => host.switchPet(petId),
+        applyIgnoreMouse: (ignore) => host.applyIgnoreMouse(!!ignore),
+      };
+
+      const opts =
+        payload && typeof payload === 'object' ? payload : {};
+      popupPetContextMenu(trayHost, {
+        x: opts.x,
+        y: opts.y,
+        vitalsLabel: opts.vitalsLabel,
+        muted: opts.muted,
+      });
+    } catch (err) {
+      log.warn('[pet] popup-context-menu 失败:', formatErr(err));
+    }
   });
 
   ipcMain.on(IPC.WINDOW_SET_IGNORE_MOUSE, (_event, ignore) => {

@@ -15,6 +15,7 @@ const IPC = {
   PET_READY: 'pet:ready',
   PET_REQUEST_BEHAVIOR: 'pet:request-behavior',
   PET_TOGGLE_MUTE: 'pet:toggle-mute',
+  PET_POPUP_CONTEXT_MENU: 'pet:popup-context-menu',
   AI_CHAT: 'ai:chat',
   AI_GET_SETTINGS: 'ai:get-settings',
   AI_SAVE_SETTINGS: 'ai:save-settings',
@@ -91,6 +92,14 @@ contextBridge.exposeInMainWorld('petAPI', {
     ipcRenderer.invoke(IPC.AI_SAVE_SETTINGS, partial || {}),
 
   quit: () => ipcRenderer.send(IPC.APP_QUIT),
+
+  /**
+   * 宠物小窗右键：主进程 Menu.popup（可画出窗 bounds）
+   * @param {{ x?: number; y?: number; vitalsLabel?: string; muted?: boolean }} [payload]
+   */
+  popupContextMenu: (payload) => {
+    ipcRenderer.send(IPC.PET_POPUP_CONTEXT_MENU, payload || {});
+  },
 
   /** @param {boolean} ignore */
   setIgnoreMouse: (ignore) => {

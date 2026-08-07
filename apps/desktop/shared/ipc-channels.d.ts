@@ -9,6 +9,8 @@ export interface IpcChannels {
   readonly PET_READY: 'pet:ready';
   readonly PET_REQUEST_BEHAVIOR: 'pet:request-behavior';
   readonly PET_TOGGLE_MUTE: 'pet:toggle-mute';
+  /** 渲染 → 主进程：宠物小窗右键弹出原生菜单 */
+  readonly PET_POPUP_CONTEXT_MENU: 'pet:popup-context-menu';
   readonly AI_CHAT: 'ai:chat';
   readonly AI_GET_SETTINGS: 'ai:get-settings';
   readonly AI_SAVE_SETTINGS: 'ai:save-settings';
@@ -41,6 +43,7 @@ export const PET_SWITCH: IpcChannels['PET_SWITCH'];
 export const PET_READY: IpcChannels['PET_READY'];
 export const PET_REQUEST_BEHAVIOR: IpcChannels['PET_REQUEST_BEHAVIOR'];
 export const PET_TOGGLE_MUTE: IpcChannels['PET_TOGGLE_MUTE'];
+export const PET_POPUP_CONTEXT_MENU: IpcChannels['PET_POPUP_CONTEXT_MENU'];
 export const AI_CHAT: IpcChannels['AI_CHAT'];
 export const AI_GET_SETTINGS: IpcChannels['AI_GET_SETTINGS'];
 export const AI_SAVE_SETTINGS: IpcChannels['AI_SAVE_SETTINGS'];

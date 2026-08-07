@@ -289,6 +289,19 @@ export interface PetAPI {
   quit: () => void;
 
   /**
+   * 宠物小窗右键弹出原生菜单（主进程 Menu.popup，可画出窗 bounds）
+   * @param payload.x / y 相对窗口的 client 坐标
+   * @param payload.vitalsLabel 可选顶部状态行
+   * @param payload.muted 可选，用于静音项文案
+   */
+  popupContextMenu: (payload?: {
+    x?: number;
+    y?: number;
+    vitalsLabel?: string;
+    muted?: boolean;
+  }) => void;
+
+  /**
    * 设置点击穿透；开启后宠物窗不再收鼠标，须托盘关闭
    */
   setIgnoreMouse: (ignore: boolean) => void;

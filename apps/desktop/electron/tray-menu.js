@@ -196,6 +196,53 @@ function buildAppMenuTemplate(host) {
 }
 
 /**
+ * 宠物小窗右键：原生 Menu.popup（可画出窗 bounds，与托盘同源模板）
+ * @param {TrayHost} host
+ * @param {{ x?: number; y?: number; vitalsLabel?: string; muted?: boolean }} [opts]
+ */
+function popupPetContextMenu(host, opts = {}) {
+  const mainWindow = host.getMainWindow();
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+
+  // 穿透时先关，否则点不到菜单后续交互
+  if (host.getIgnoreMouse && host.getIgnoreMouse()) {
+    host.applyIgnoreMouse(false);
+  }
+
+  /** @type {import('electron').MenuItemConstructorOptions[]} */
+  const template = buildAppMenuTemplate(host);
+
+  // 可选：顶部状态行（饱食/心情）
+  const vitalsLabel =
+    opts && typeof opts.vitalsLabel === 'string' ? opts.vitalsLabel.trim() : '';
+  if (vitalsLabel) {
+    template.unshift(
+      { label: vitalsLabel, enabled: false },
+      { type: 'separator' },
+    );
+  }
+
+  // 可选：按渲染层 muted 改静音文案
+  if (opts && typeof opts.muted === 'boolean') {
+    const muteItem = template.find(
+      (item) => item && item.label === '静音切换',
+    );
+    if (muteItem) {
+      muteItem.label = opts.muted ? '取消静音' : '静音';
+    }
+  }
+
+  try {
+    const menu = Menu.buildFromTemplate(template);
+    const x = Math.round(Number(opts.x) || 0);
+    const y = Math.round(Number(opts.y) || 0);
+    menu.popup({ window: mainWindow, x, y });
+  } catch (err) {
+    log.warn('[pet] 弹出右键菜单失败:', formatErr(err));
+  }
+}
+
+/**
  * @param {TrayHost} host
  */
 function rebuildTrayMenu(host) {
@@ -340,6 +387,7 @@ function createTray(host) {
 module.exports = {
   sendBehaviorRequest,
   buildAppMenuTemplate,
+  popupPetContextMenu,
   rebuildTrayMenu,
   resolveAppIconPath,
   createTrayImage,

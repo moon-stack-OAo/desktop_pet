@@ -1,10 +1,20 @@
 /**
  * 释放指定 TCP 端口（Windows / Unix），供 desktop:dev 启动前清理残留 Vite
  * 用法: node scripts/free-port.js 5173
+ *
+ * Windows 上顺带 chcp 65001，减轻同控制台会话内中文日志乱码
  */
 'use strict';
 
 const { execSync } = require('child_process');
+
+if (process.platform === 'win32' && process.env.PET_CONSOLE_UTF8 !== '0') {
+  try {
+    execSync('chcp 65001', { stdio: 'ignore', windowsHide: true });
+  } catch {
+    /* ignore */
+  }
+}
 
 const port = Number(process.argv[2] || 5173);
 if (!Number.isFinite(port) || port <= 0) {

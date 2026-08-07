@@ -1,7 +1,6 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 import AiSettingsPanel from './components/AiSettingsPanel';
 import ChatPanel from './components/ChatPanel';
-import ContextMenu from './components/ContextMenu';
 import PetStage from './components/PetStage';
 import PetSpritesheet from './components/PetSpritesheet';
 import PetVideo from './components/PetVideo';
@@ -26,8 +25,6 @@ function PetApp() {
     state,
     request,
     onClipEnded,
-    switchPet,
-    catalog,
     muted,
     toggleMuted,
     vitals,
@@ -36,12 +33,8 @@ function PetApp() {
     playWith,
   } = usePetController();
 
-  const { ignoreMouse, toggleIgnoreMouse } = useIgnoreMouse({ setStatus });
-
-  const closeMenuRef = useRef<() => void>(() => {});
-  const onBeforeOpenChat = useCallback(() => {
-    closeMenuRef.current();
-  }, []);
+  // 同步主进程穿透状态（托盘/右键菜单切换时）
+  useIgnoreMouse({ setStatus });
 
   const chat = useChatSession({
     petId: payload?.id,
@@ -50,11 +43,9 @@ function PetApp() {
     pat,
     playWith,
     request,
-    onBeforeOpen: onBeforeOpenChat,
   });
 
   const openAiSettings = useCallback(() => {
-    closeMenuRef.current();
     setAiSettingsOpen(true);
   }, []);
 
@@ -80,27 +71,15 @@ function PetApp() {
     }
   }, [chat.chatOpen, aiSettingsOpen]);
 
-  const petMenu = usePetMenu({
+  // 右键原生菜单 + Esc
+  usePetMenu({
     chatOpen: chat.chatOpen,
     onCloseChat: chat.closeChat,
-    catalog,
-    payloadId: payload?.id,
     vitals,
     muted,
-    ignoreMouse,
-    feed,
-    pat,
-    playWith,
-    request,
-    switchPet,
-    toggleMuted,
-    toggleIgnoreMouse,
-    onOpenAiSettings: openAiSettings,
     aiSettingsOpen,
     onCloseAiSettings: closeAiSettings,
   });
-
-  closeMenuRef.current = petMenu.closeMenu;
 
   useDebugBehaviors({
     chatOpen: chat.chatOpen,
@@ -140,7 +119,7 @@ function PetApp() {
       .filter((u): u is string => typeof u === 'string' && u.length > 0);
   })();
 
-  // 主进程托盘「静音切换」仍可用
+  // 主进程托盘/右键「静音切换」
   useEffect(() => {
     const unsub = window.petAPI?.onToggleMute?.(() => {
       toggleMuted();
@@ -208,14 +187,6 @@ function PetApp() {
         onOpenSettings={openAiSettings}
       />
       <AiSettingsPanel open={aiSettingsOpen} onClose={closeAiSettings} />
-      <ContextMenu
-        open={petMenu.menu.open}
-        x={petMenu.menu.x}
-        y={petMenu.menu.y}
-        items={petMenu.menuItems}
-        onClose={petMenu.handleCloseMenu}
-        stayOpenIds={['switch', 'back']}
-      />
       <UpdateDialog />
     </PetStage>
   );

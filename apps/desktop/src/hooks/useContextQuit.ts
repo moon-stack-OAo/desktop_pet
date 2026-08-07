@@ -1,10 +1,5 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-
-export interface ContextMenuState {
-  open: boolean;
-  x: number;
-  y: number;
-}
+import { useEffect, useRef } from 'react';
+import type { VitalStats } from './useVitals';
 
 export interface UseContextQuitOptions {
   /** 对话面板是否打开；Esc 优先关聊天 */
@@ -14,44 +9,37 @@ export interface UseContextQuitOptions {
   /** AI 设置是否打开；Esc 优先于聊天关闭 */
   aiSettingsOpen?: boolean;
   onCloseAiSettings?: () => void;
+  /** 生命值：右键菜单顶部状态行 */
+  vitals?: VitalStats | null;
+  /** 静音：右键菜单静音项文案 */
+  muted?: boolean;
 }
 
 /**
- * 右键打开自定义 HTML 菜单；Esc：设置 → 聊天 → 菜单 → 退出。
+ * 右键：主进程原生 Menu.popup；Esc：设置 → 聊天 → 退出。
  */
-export function useContextQuit(options: UseContextQuitOptions = {}): {
-  menu: ContextMenuState;
-  openMenu: (x: number, y: number) => void;
-  closeMenu: () => void;
-} {
+export function useContextQuit(options: UseContextQuitOptions = {}): void {
   const {
     chatOpen = false,
     onCloseChat,
     aiSettingsOpen = false,
     onCloseAiSettings,
+    vitals = null,
+    muted = false,
   } = options;
+
   const chatOpenRef = useRef(chatOpen);
   const onCloseChatRef = useRef(onCloseChat);
   const aiSettingsOpenRef = useRef(aiSettingsOpen);
   const onCloseAiSettingsRef = useRef(onCloseAiSettings);
+  const vitalsRef = useRef(vitals);
+  const mutedRef = useRef(muted);
   chatOpenRef.current = chatOpen;
   onCloseChatRef.current = onCloseChat;
   aiSettingsOpenRef.current = aiSettingsOpen;
   onCloseAiSettingsRef.current = onCloseAiSettings;
-
-  const [menu, setMenu] = useState<ContextMenuState>({
-    open: false,
-    x: 0,
-    y: 0,
-  });
-
-  const openMenu = useCallback((x: number, y: number) => {
-    setMenu({ open: true, x, y });
-  }, []);
-
-  const closeMenu = useCallback(() => {
-    setMenu((m) => (m.open ? { ...m, open: false } : m));
-  }, []);
+  vitalsRef.current = vitals;
+  mutedRef.current = muted;
 
   useEffect(() => {
     const onContextMenu = (e: MouseEvent) => {
@@ -63,8 +51,17 @@ export function useContextQuit(options: UseContextQuitOptions = {}): {
       if (t?.closest?.('.chat-panel, .ai-settings-panel, input, textarea')) {
         return;
       }
-      setMenu({ open: true, x: e.clientX, y: e.clientY });
+      const v = vitalsRef.current;
+      const h = v ? Math.round(v.hunger) : '—';
+      const m = v ? Math.round(v.mood) : '—';
+      window.petAPI?.popupContextMenu?.({
+        x: e.clientX,
+        y: e.clientY,
+        vitalsLabel: `状态：饱食 ${h} / 心情 ${m}`,
+        muted: mutedRef.current,
+      });
     };
+
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       e.preventDefault();
@@ -76,13 +73,7 @@ export function useContextQuit(options: UseContextQuitOptions = {}): {
         onCloseChatRef.current?.();
         return;
       }
-      setMenu((m) => {
-        if (m.open) {
-          return { ...m, open: false };
-        }
-        window.petAPI?.quit();
-        return m;
-      });
+      window.petAPI?.quit();
     };
 
     // 捕获阶段优先于默认行为
@@ -96,6 +87,4 @@ export function useContextQuit(options: UseContextQuitOptions = {}): {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, []);
-
-  return { menu, openMenu, closeMenu };
 }

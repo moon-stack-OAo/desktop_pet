@@ -1,7 +1,7 @@
 import {useEffect, useRef} from 'react';
 
 const NO_DRAG_SEL =
-  '.context-menu, .chat-panel, .ai-settings-panel, .update-dialog, input, textarea, button, a, [data-no-drag]';
+  '.chat-panel, .ai-settings-panel, .update-dialog, input, textarea, button, a, [data-no-drag]';
 
 /**
  * 无边框窗自定义拖动：左键在可拖区域按下并移动 → IPC 改窗口位置。

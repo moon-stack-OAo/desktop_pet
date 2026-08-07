@@ -71,7 +71,7 @@ export function useChatSession({
       const t = e.target as HTMLElement | null;
       if (
         t?.closest?.(
-          '.chat-panel, .ai-settings-panel, .context-menu, input, button, textarea',
+          '.chat-panel, .ai-settings-panel, input, button, textarea',
         )
       ) {
         return;

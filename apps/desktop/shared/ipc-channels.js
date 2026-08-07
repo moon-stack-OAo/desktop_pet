@@ -15,6 +15,8 @@ const IPC = {
   PET_READY: 'pet:ready',
   PET_REQUEST_BEHAVIOR: 'pet:request-behavior',
   PET_TOGGLE_MUTE: 'pet:toggle-mute',
+  /** 渲染 → 主进程：宠物小窗右键弹出原生菜单 */
+  PET_POPUP_CONTEXT_MENU: 'pet:popup-context-menu',
 
   // —— AI ——
   AI_CHAT: 'ai:chat',
