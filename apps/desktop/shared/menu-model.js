@@ -15,7 +15,7 @@
  */
 
 /**
- * 喂食 / 摸摸 / 玩耍 / 休息 / 走动
+ * 用户主动交互仅这 4 项；walk/sick/hunt 等由 AutoScheduler / 养成自动触发
  * @type {readonly BehaviorMenuItem[]}
  */
 const BEHAVIOR_MENU_ITEMS = Object.freeze([
@@ -23,7 +23,6 @@ const BEHAVIOR_MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'happy', label: '摸摸头', behaviorId: 'happy' }),
   Object.freeze({ id: 'play', label: '玩耍', behaviorId: 'play' }),
   Object.freeze({ id: 'sleep', label: '休息', behaviorId: 'sleep' }),
-  Object.freeze({ id: 'walk', label: '走动', behaviorId: 'walk' }),
 ]);
 
 module.exports = {

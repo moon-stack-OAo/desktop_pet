@@ -45,6 +45,16 @@ describe('localRuleChat', () => {
     assert.equal(r.action, 'walk');
   });
 
+  it('不舒服 → sick', () => {
+    const r = localRuleChat('有点不舒服', '咕嘎', null);
+    assert.equal(r.action, 'sick');
+  });
+
+  it('出去玩 → hunt', () => {
+    const r = localRuleChat('出去玩', '咕嘎', null);
+    assert.equal(r.action, 'hunt');
+  });
+
   it('默认闲聊 action 为 null', () => {
     const r = localRuleChat('今天天气不错', '咕嘎', null);
     assert.equal(r.action, null);

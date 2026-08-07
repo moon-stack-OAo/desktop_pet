@@ -128,7 +128,8 @@
     ],
     "walk": [
       "walk",
-      "run-right"
+      "run-right",
+      "run-left"
     ],
     "eat": [
       "eat"

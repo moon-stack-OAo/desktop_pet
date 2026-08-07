@@ -122,7 +122,7 @@ export function validatePet(config: PetConfig): ValidationResult {
             issues.push(
               issue(
                 `video.behaviorMap.${behavior}`,
-                'behaviorMap 的值应为非空字符串数组',
+                'behaviorMap 的值应为非空候选数组（string 或 {clip,weight}）',
                 'warning',
                 'BEHAVIOR_EMPTY',
               ),

@@ -202,9 +202,28 @@ function normalizeBehaviorMap(input: unknown): BehaviorMap | undefined {
   }
   const map: BehaviorMap = {};
   for (const [key, val] of Object.entries(input)) {
-    if (Array.isArray(val)) {
-      map[key] = val.filter((item): item is string => typeof item === 'string');
+    if (!Array.isArray(val)) continue;
+    const list = [];
+    for (const item of val) {
+      if (typeof item === 'string' && item.trim()) {
+        list.push(item.trim());
+        continue;
+      }
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        const o = item as Record<string, unknown>;
+        const clip =
+          typeof o.clip === 'string'
+            ? o.clip.trim()
+            : typeof o.name === 'string'
+              ? o.name.trim()
+              : '';
+        if (!clip) continue;
+        const weight =
+          typeof o.weight === 'number' && o.weight > 0 ? o.weight : undefined;
+        list.push(weight !== undefined ? { clip, weight } : clip);
+      }
     }
+    if (list.length > 0) map[key] = list;
   }
   return Object.keys(map).length > 0 ? map : undefined;
 }

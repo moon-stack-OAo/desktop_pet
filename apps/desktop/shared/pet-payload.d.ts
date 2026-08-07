@@ -103,7 +103,18 @@ export interface PetPayload {
   /**
    * 逻辑行为 → clip/动画 候选列表
    */
-  behaviorMap?: Record<string, string[]>;
+  /** clip 候选：string 等权，或 { clip, weight } 加权 */
+  behaviorMap?: Record<
+    string,
+    Array<string | { clip: string; weight?: number }>
+  >;
+  /**
+   * 可选：覆盖 AutoScheduler 候选（string 或带 weight/cooldownMs）
+   * 未设置时用 runtime 默认 walk/happy/play
+   */
+  autoBehaviors?: Array<
+    string | { name: string; weight?: number; cooldownMs?: number }
+  >;
   /** 兼容旧渲染层：等同 clips.idle */
   idle?: PetIdleClip;
   /** spritesheet 渲染器专用 */

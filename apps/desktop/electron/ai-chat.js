@@ -51,6 +51,13 @@ function localRuleChat(message, petName, vitals) {
       action: 'happy',
     };
   }
+  // hunt 须在 play 之前（「出去玩」含「玩」）
+  if (/出去玩|觅食|探险|hunt|出去转转|打猎/.test(text + lower)) {
+    return {
+      reply: `${name}：出发！去外面逛逛～咕！`,
+      action: 'hunt',
+    };
+  }
   if (/玩|玩耍|游戏|陪我玩|play/.test(text + lower)) {
     return {
       reply: `${name}：耶！一起玩！咕咕～`,
@@ -73,6 +80,12 @@ function localRuleChat(message, petName, vitals) {
     return {
       reply: `${name}：走走走～咕！`,
       action: 'walk',
+    };
+  }
+  if (/不舒服|生病|难受|sick|感冒|生病了/.test(text + lower)) {
+    return {
+      reply: `${name}：呜…有点不舒服…咕…`,
+      action: 'sick',
     };
   }
 
@@ -146,7 +159,7 @@ async function callOpenAiCompatibleChat({
     '规则：',
     '- 用角色口吻简短回复，1～3 句，口语化',
     '- 不要 Markdown、不要列表',
-    '- 必须只输出一行 JSON：{"reply":"短回复","action":"happy|eat|idle|walk|play|sleep|hungry|null"}',
+    '- 必须只输出一行 JSON：{"reply":"短回复","action":"happy|eat|idle|walk|play|sleep|hungry|sick|hunt|null"}',
     '- action 无行为时用 null；reply 内不要再嵌套 JSON',
   ];
   if (vitals && typeof vitals === 'object') {

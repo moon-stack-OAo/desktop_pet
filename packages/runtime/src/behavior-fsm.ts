@@ -1,22 +1,37 @@
 import {
-    type BehaviorFSMOptions,
-    type ClipMeta,
-    DEFAULT_SUSTAINED_BEHAVIORS,
-    defaultSchedule,
-    type FsmChangeMeta,
-    type FsmState,
-    inferPriority,
-    type InterruptPriority,
-    type PetState,
-    PRIORITY_RANK,
-    type ScheduleFn,
+  type BehaviorClipCandidate,
+  type BehaviorFSMOptions,
+  type ClipMeta,
+  DEFAULT_SUSTAINED_BEHAVIORS,
+  defaultSchedule,
+  type FsmChangeMeta,
+  type FsmState,
+  inferPriority,
+  type InterruptPriority,
+  type PetState,
+  PRIORITY_RANK,
+  type ScheduleFn,
 } from './types.js';
+
+/** 规范化 clip 候选名 */
+function candidateClipName(item: BehaviorClipCandidate): string {
+  if (typeof item === 'string') return item;
+  return String(item?.clip ?? '').trim();
+}
+
+/** 规范化权重，默认 1 */
+function candidateWeight(item: BehaviorClipCandidate): number {
+  if (typeof item === 'string') return 1;
+  const w = item?.weight;
+  return typeof w === 'number' && w > 0 ? w : 1;
+}
 
 /**
  * desktop_pet 行为状态机（纯逻辑，无 DOM/Electron 依赖）
  *
  * 规则摘要：
  * 1. request(behavior)：从 behaviorMap 选存在于 clips 的候选；map 无则同名 clip 直播
+ *    候选可为 string（等权）或 { clip, weight }（加权）
  * 2. loop=false 的 clip 结束后 onClipEnded → 回到 defaultBehavior(idle)
  * 3. loop=true 且非 default、非 sustained：在 loopMinMs~loopMaxMs 超时后自动回 idle
  *    （修复 walk/dance 等永久卡住；hungry/sleep 等 sustained 不超时）
@@ -26,7 +41,7 @@ import {
  * 6. 优先级 user > ai > auto；低优先级不可打断高优先级占用
  */
 export class BehaviorFSM {
-  private readonly behaviorMap: Record<string, string[]>;
+  private readonly behaviorMap: Record<string, BehaviorClipCandidate[]>;
   private readonly clips: Record<string, ClipMeta>;
   private readonly defaultBehavior: string;
   private readonly onChange?: BehaviorFSMOptions['onChange'];
@@ -248,7 +263,7 @@ export class BehaviorFSM {
 
   /**
    * 解析进入某 behavior 应使用的 clip，并折叠占位映射。
-   * 1) behaviorMap 有候选 → 过滤存在于 clips 的，随机选一个
+   * 1) behaviorMap 有候选 → 过滤存在于 clips 的，按 weight 加权随机
    * 2) map 无/全无效 → clips 有同名则用同名
    * 3) 占位：非 default 请求最终落到 default 的 loop clip → 记为 default
    */
@@ -258,9 +273,9 @@ export class BehaviorFSM {
     let resolved: { behavior: string; clip: string } | null = null;
     const candidates = this.behaviorMap[behavior];
     if (candidates && candidates.length > 0) {
-      const valid = candidates.filter((c) => this.hasClip(c));
+      const valid = candidates.filter((c) => this.hasClip(candidateClipName(c)));
       if (valid.length > 0) {
-        resolved = { behavior, clip: this.pickOne(valid) };
+        resolved = { behavior, clip: this.pickWeighted(valid) };
       }
     }
     if (!resolved && this.hasClip(behavior)) {
@@ -296,12 +311,33 @@ export class BehaviorFSM {
     return this.clips[clip]?.loop === true;
   }
 
+  /** 等权随机（兼容旧逻辑） */
   private pickOne(list: string[]): string {
     if (list.length === 1) {
       return list[0]!;
     }
     const idx = Math.floor(this.random() * list.length);
     return list[Math.min(idx, list.length - 1)]!;
+  }
+
+  /**
+   * 加权随机选 clip；string 权重 1，{clip,weight} 用 weight。
+   */
+  private pickWeighted(list: BehaviorClipCandidate[]): string {
+    if (list.length === 1) {
+      return candidateClipName(list[0]!);
+    }
+    let total = 0;
+    for (const c of list) total += candidateWeight(c);
+    if (total <= 0) {
+      return candidateClipName(list[0]!);
+    }
+    let r = this.random() * total;
+    for (const c of list) {
+      r -= candidateWeight(c);
+      if (r <= 0) return candidateClipName(c);
+    }
+    return candidateClipName(list[list.length - 1]!);
   }
 
   /** 无任何可用 clip 时的兜底名 */

@@ -26,8 +26,19 @@ export interface VideoClip {
   loop?: boolean;
 }
 
-/** 行为 → 可用 clip 名称列表 */
-export type BehaviorMap = Record<string, string[]>;
+/**
+ * behaviorMap 候选：string 等权，或 { clip, weight } 加权
+ * weight 越大越容易被选中；缺省 1
+ */
+export type BehaviorClipRef =
+  | string
+  | {
+      clip: string;
+      weight?: number;
+    };
+
+/** 行为 → 可用 clip 候选列表 */
+export type BehaviorMap = Record<string, BehaviorClipRef[]>;
 
 /** 视频渲染配置 */
 export interface VideoConfig {

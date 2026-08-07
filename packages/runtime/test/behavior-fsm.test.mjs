@@ -80,6 +80,42 @@ describe('BehaviorFSM 初始与 request', () => {
     fsm.dispose();
   });
 
+  it('behaviorMap 支持 {clip,weight} 加权（低权 clip 更难被选中）', () => {
+    // random=0.99 落在权重末段；question weight 0.35 vs idle 1 + peek 1 → 总 2.35
+    // 0.99*2.35≈2.32 → 越过 idle(1)、peek(1) 才到 question
+    const clips = {
+      idle: { loop: true },
+      peek: { loop: false },
+      question: { loop: false },
+    };
+    const map = {
+      idle: [
+        'idle',
+        'peek',
+        { clip: 'question', weight: 0.35 },
+      ],
+    };
+    // random 很小 → 必中 idle（首段）
+    const fsmLow = createFsm({
+      clips,
+      behaviorMap: map,
+      random: () => 0.01,
+    });
+    assert.equal(fsmLow.request('idle', 'user'), true);
+    assert.equal(fsmLow.getState().clip, 'idle');
+    fsmLow.dispose();
+
+    // random 很大 → 落到 question
+    const fsmHigh = createFsm({
+      clips,
+      behaviorMap: map,
+      random: () => 0.99,
+    });
+    assert.equal(fsmHigh.request('idle', 'user'), true);
+    assert.equal(fsmHigh.getState().clip, 'question');
+    fsmHigh.dispose();
+  });
+
   it('多候选时按 random 选取', () => {
     const fsm = createFsm({ random: () => 0.9 });
     assert.equal(fsm.request('eat', 'user'), true);

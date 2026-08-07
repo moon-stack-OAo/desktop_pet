@@ -37,8 +37,12 @@ describe('loadManifest / loadPet（仓库 pets）', () => {
     assert.equal(loaded.config.spritesheet?.frameWidth, 192);
     assert.ok(loaded.config.spritesheet?.animations?.walk);
     assert.equal(loaded.config.spritesheet?.animations?.walk?.frames, 8);
-    assert.deepEqual(loaded.config.behaviorMap?.walk, ['walk']);
-    assert.deepEqual(loaded.config.behaviorMap?.happy, ['happy']);
+    // walk / happy 可含扩展 clip 候选（run-left、review 等）
+    const walk = loaded.config.behaviorMap?.walk ?? [];
+    const happy = loaded.config.behaviorMap?.happy ?? [];
+    assert.ok(walk.includes('walk'));
+    assert.ok(walk.includes('run-left') || walk.includes('run-right'));
+    assert.ok(happy.includes('happy'));
   });
 
   it('loadPet 不存在目录抛错', async () => {

@@ -2,6 +2,7 @@ export type {
   AiConfig,
   AudioConfig,
   BehaviorMap,
+  BehaviorClipRef,
   LoadAllPetsResult,
   LoadedPet,
   Manifest,

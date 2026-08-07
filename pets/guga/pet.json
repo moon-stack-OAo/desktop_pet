@@ -98,7 +98,9 @@
     },
     "behaviorMap": {
       "idle": [
-        "idle"
+        "idle",
+        "peek",
+        { "clip": "question", "weight": 0.35 }
       ],
       "walk": [
         "walk"
@@ -112,12 +114,14 @@
       ],
       "sleep": [
         "rest",
-        "idle"
+        "idle",
+        "farewell"
       ],
       "play": [
         "dance",
         "spin",
-        "music"
+        "music",
+        "grasp"
       ],
       "sick": [
         "angry",
@@ -130,7 +134,10 @@
       ],
       "hunt": [
         "walk",
-        "work"
+        "work",
+        "walkout",
+        "study",
+        "watch"
       ]
     }
   },

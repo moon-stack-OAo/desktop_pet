@@ -100,11 +100,11 @@ assert(inferPriority('ai:chat') === 'ai', 'infer ai');
 assert(inferPriority('user:feed') === 'user', 'infer user');
 assert(PRIORITY_RANK.user > PRIORITY_RANK.ai, 'rank order');
 
-// scheduler 仅创建/启停
+// scheduler 仅创建/启停（默认多候选 + 显式 walk）
 const sch = createAutoScheduler(fsm, {
   minMs: 10,
   maxMs: 10,
-  behaviors: ['walk'],
+  behaviors: ['walk', 'happy', 'play'],
   random: () => 0,
 });
 assert(sch.isRunning() === false, 'sch not running');
