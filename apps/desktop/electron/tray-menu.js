@@ -300,10 +300,32 @@ function createTray(host) {
       // 单击也尝试显示/聚焦，避免「只有穿透时完全摸不到」
       const win = host.getMainWindow();
       if (!win || win.isDestroyed()) return;
+      if (host.getIgnoreMouse()) {
+        host.applyIgnoreMouse(false);
+      }
+      if (win.isMinimized()) win.restore();
       win.show();
+      win.moveTop();
       win.focus();
     });
     notifyIgnoreMouseIfNeeded(tray, host.getIgnoreMouse());
+    // 每次启动提示：透明窗 + 无任务栏时用户常以为没启动
+    try {
+      if (
+        process.platform === 'win32' &&
+        typeof tray.displayBalloon === 'function'
+      ) {
+        const name =
+          payload?.displayName || host.getCurrentPetId() || 'desktop_pet';
+        tray.displayBalloon({
+          title: 'desktop_pet 已启动',
+          content: `当前：${name}。应在主屏右下角；看不到请点本图标，或右键「显示/隐藏」。`,
+          iconType: 'info',
+        });
+      }
+    } catch {
+      /* ignore */
+    }
   } catch (err) {
     log.warn('[pet] 托盘创建失败:', formatErr(err));
     host.setTray(null);

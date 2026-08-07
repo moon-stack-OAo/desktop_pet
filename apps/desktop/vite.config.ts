@@ -7,6 +7,7 @@ export default defineConfig({
   plugins: [react()],
   base: './',
   server: {
+    // 与 wait-on / free-port 约定 5173；启动前 scripts/free-port.js 会尝试释放
     port: 5173,
     strictPort: true,
   },

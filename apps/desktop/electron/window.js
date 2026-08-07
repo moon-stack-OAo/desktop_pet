@@ -169,7 +169,25 @@ function createWindow(petPayload, host) {
   host.setMainWindow(mainWindow);
 
   mainWindow.setMenuBarVisibility(false);
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  try {
+    mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  } catch {
+    /* 部分平台不支持 */
+  }
   mainWindow.setPosition(x, y);
+
+  // 透明窗：等 ready-to-show 再 show，避免 Windows 上「有进程无画面」
+  mainWindow.once('ready-to-show', () => {
+    if (mainWindow.isDestroyed()) return;
+    mainWindow.show();
+    mainWindow.moveTop();
+    const b = mainWindow.getBounds();
+    log.info(
+      '[window] ready-to-show',
+      `${b.x},${b.y} ${b.width}x${b.height}`,
+    );
+  });
 
   // 打包态强制 loadFile，避免误设 NODE_ENV=development 去连 Vite
   let isPackaged = false;
@@ -186,19 +204,46 @@ function createWindow(petPayload, host) {
     process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
   if (isDev) {
-    mainWindow.loadURL(devServerUrl);
+    log.info('[window] 开发模式加载:', devServerUrl);
+    mainWindow
+      .loadURL(devServerUrl)
+      .then(() => {
+        log.info('[window] loadURL 完成');
+        mainWindow.show();
+        mainWindow.focus();
+      })
+      .catch((err) => {
+        log.error('[window] loadURL 失败:', devServerUrl, formatErr(err));
+      });
     if (process.env.ELECTRON_OPEN_DEVTOOLS === '1') {
       mainWindow.webContents.openDevTools({ mode: 'detach' });
     }
   } else {
     const htmlPath = path.join(__dirname, '../dist-renderer/index.html');
-    mainWindow.loadFile(htmlPath).catch((err) => {
-      log.error('[window] loadFile 失败:', htmlPath, formatErr(err));
-    });
+    log.info('[window] 加载本地页面:', htmlPath);
+    mainWindow
+      .loadFile(htmlPath)
+      .then(() => {
+        mainWindow.show();
+        mainWindow.focus();
+      })
+      .catch((err) => {
+        log.error('[window] loadFile 失败:', htmlPath, formatErr(err));
+      });
   }
 
   mainWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
     log.error('[window] 页面加载失败:', code, desc, url);
+  });
+
+  mainWindow.webContents.on('dom-ready', () => {
+    const b = mainWindow.getBounds();
+    log.info(
+      '[window] dom-ready bounds=',
+      `${b.x},${b.y} ${b.width}x${b.height}`,
+      'visible=',
+      mainWindow.isVisible(),
+    );
   });
 
   if (ignoreMouseEvents) {
@@ -214,6 +259,11 @@ function createWindow(petPayload, host) {
       IPC.WINDOW_IGNORE_MOUSE_CHANGED,
       host.getIgnoreMouse(),
     );
+    // 再次确保可见（多显示器/任务栏场景）
+    if (!mainWindow.isVisible()) {
+      mainWindow.show();
+    }
+    mainWindow.moveTop();
   });
 
   mainWindow.on('closed', () => {
