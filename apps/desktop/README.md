@@ -424,7 +424,7 @@ apps/desktop/release/
 
 | 项 | 现状 | 后续计划 |
 |----|------|----------|
-| **目标产物** | **nsis** + **zip**（x64） | 安装包 `*-Setup-*.exe`；解压包 `*-win-x64.zip`（无 portable） |
+| **目标产物** | **nsis** + **zip**（x64） | 安装包 `*-Setup-*.exe`；解压包默认名 `*-win-x64.zip`（无顶层 `zip` 配置块） |
 | **NSIS** | `oneClick: false`，可改安装目录 | 稳定后再考虑一键安装默认 |
 | **自动更新** | `electron-updater` + `publish.provider: github`（`moon-stack-OAo/desktop_pet`） | 需 GitHub Release 资产命名与 builder 一致；未 TAG 前不发正式更新通道 |
 | **代码签名** | **`signAndEditExecutable: false`**，**当前无 Authenticode 签名** | 取得证书后：开开发人员模式 → 去掉该开关 → 配置 `certificateSubjectName` / CI 密钥；未签名时 SmartScreen 可能告警属预期 |

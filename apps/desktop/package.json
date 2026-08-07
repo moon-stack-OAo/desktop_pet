@@ -112,9 +112,7 @@
       "allowToChangeInstallationDirectory": true,
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
-    "zip": {
-      "artifactName": "${productName}-${version}-win-x64.${ext}"
-    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
     "publish": [
       {
         "provider": "github",

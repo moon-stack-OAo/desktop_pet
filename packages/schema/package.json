@@ -18,7 +18,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "npm run build && node --test test/**/*.test.mjs"
+    "test": "npm run build && node --test test/load.test.mjs test/normalize-validate.test.mjs"
   },
   "engines": {
     "node": ">=18"
