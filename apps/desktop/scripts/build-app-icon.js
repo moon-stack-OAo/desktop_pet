@@ -178,7 +178,7 @@ function buildIco(layers, outPath) {
     }
     const data = fs.readFileSync(layer.pngPath);
     if (data[0] !== 0x89 || data[1] !== 0x50) {
-      throw new Error('not png: ' + layer.pngPath);
+      throw new Error(`not png: ${layer.pngPath}`);
     }
     return { w: layer.size, h: layer.size, data, kind: 'png' };
   });
