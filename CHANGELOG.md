@@ -15,6 +15,7 @@
 ### 变更
 
 - 产品显示名统一为 **MoonPet**（`productName` / 托盘 / 窗口标题 / 安装包产物名）；仓库与 npm 包名仍为 `desktop_pet` / `@pet/*`
+- 重建 `icon.ico` 为 PNG-in-ICO（多尺寸 + 8-bit alpha），修复 exe/资源管理器图标发糊
 
 ---
 
