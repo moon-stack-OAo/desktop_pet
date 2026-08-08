@@ -8,7 +8,8 @@ export type CoreBehaviorName =
     | 'play'
     | 'sick'
     | 'happy'
-    | 'hunt';
+    | 'hunt'
+    | 'grasp';
 
 /** 可直接播放的扩展 clip 名（clips 中存在即可） */
 export type ExtendedClipName =
@@ -50,6 +51,10 @@ export const DEFAULT_SUSTAINED_BEHAVIORS: readonly string[] = [
     'hungry',
     'sleep',
     'sick',
+    /** 拖动抓起：松手前保持 grasp.webm，不因 loop 超时回 idle */
+    'grasp',
+    /** 系统负载触发的加班：由负载回落逻辑结束，不因 loop 超时打断 */
+    'work',
 ];
 
 /** FSM 对外状态快照 */

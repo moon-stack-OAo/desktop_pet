@@ -310,6 +310,7 @@ function buildAiPayload(petDir, aiConfig) {
  * @param {PetRenderer} [opts.renderer]
  * @param {PetAudioPayload} [opts.audio]
  * @param {PetAiPayload} [opts.ai]
+ * @param {import('../shared/pet-payload').PetPayload['autoBehaviors']} [opts.autoBehaviors]
  * @returns {PetPayload}
  */
 function buildVideoPayload({
@@ -323,6 +324,7 @@ function buildVideoPayload({
   renderer = /** @type {PetRenderer} */ ('video'),
   audio,
   ai,
+  autoBehaviors,
 }) {
   const idleClip = clips.idle;
   if (!idleClip) {
@@ -351,6 +353,9 @@ function buildVideoPayload({
   }
   if (ai) {
     payload.ai = ai;
+  }
+  if (autoBehaviors && autoBehaviors.length > 0) {
+    payload.autoBehaviors = autoBehaviors;
   }
   return payload;
 }
@@ -653,6 +658,7 @@ function buildPayloadFromLoaded(petId, loaded) {
     renderer: 'video',
     audio,
     ai,
+    autoBehaviors: config.autoBehaviors,
   });
 
   log.info(

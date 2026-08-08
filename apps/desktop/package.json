@@ -7,7 +7,7 @@
   "main": "electron/main.js",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.electron.json",
-    "test": "node --test electron/ai-chat.test.js electron/ai-settings.test.js electron/pet-loader.test.js electron/user-storage-migrate.test.js",
+    "test": "node --test electron/ai-chat.test.js electron/ai-settings.test.js electron/pet-loader.test.js electron/user-storage-migrate.test.js electron/system-metrics.test.js",
     "test:pet-asset": "node scripts/smoke-pet-asset-path.js",
     "free-port": "node scripts/free-port.js 5173",
     "dev:renderer": "vite",

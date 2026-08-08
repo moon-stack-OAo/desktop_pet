@@ -14,6 +14,7 @@ import {BehaviorFSM, createAutoScheduler, DEFAULT_AUTO_BEHAVIORS, type FsmState,
 import {useAudio} from '../hooks/useAudio';
 import {useHungerAutoBehavior} from '../hooks/useHungerAutoBehavior';
 import {type PetLoadStatus, usePet} from '../hooks/usePet';
+import {useSystemLoadWork} from '../hooks/useSystemLoadWork';
 import {useVitals, type VitalStats} from '../hooks/useVitals';
 import {info as logInfo} from '../utils/log';
 
@@ -255,28 +256,38 @@ export function PetProvider({children}: PetProviderProps) {
         setFsmState(fsm.getState());
         // 初始进入不强制播音效（多为 idle，无映射）
 
-        // 有 walk / happy / play 任一可解析时启动自主调度（默认 walk+happy+play 权重池）
+        // 有 walk / happy / play / hunt 等可解析时启动自主调度
         const map = pet.behaviorMap ?? {};
-        const hasAutoCandidate = (['walk', 'happy', 'play'] as const)
-            .some((name) => !!clipMeta[name] || (map[name] ?? [])
-                // @ts-ignore
-                .some((c) => !!clipMeta[c]),
-            );
+        const resolveClipName = (c: string | { clip: string }) =>
+            typeof c === 'string' ? c : c?.clip;
+        const behaviorResolvable = (name: string) =>
+            !!clipMeta[name] ||
+            (map[name] ?? []).some((c) => {
+                const clip = resolveClipName(c as string | { clip: string });
+                return !!clip && !!clipMeta[clip];
+            });
+        const payloadAutos = pet.autoBehaviors;
+        const autoList =
+            payloadAutos && payloadAutos.length > 0
+                ? payloadAutos
+                : [...DEFAULT_AUTO_BEHAVIORS];
+        const hasAutoCandidate = autoList.some((item) => {
+            const name = typeof item === 'string' ? item : item.name;
+            return behaviorResolvable(name);
+        });
         let scheduler: ReturnType<typeof createAutoScheduler> | null = null;
         if (hasAutoCandidate) {
-            // pet.autoBehaviors 可选覆盖；否则用 runtime 默认表
-            const payloadAutos = pet.autoBehaviors;
             scheduler = createAutoScheduler(fsm, {
                 minMs: 8_000,
                 maxMs: 20_000,
-                behaviors:
-                    payloadAutos && payloadAutos.length > 0
-                        ? payloadAutos
-                        : [...DEFAULT_AUTO_BEHAVIORS],
+                behaviors: autoList,
             });
             scheduler.start();
             logInfo(
-                '[renderer] AutoScheduler 已启动（walk/happy/play）',
+                '[renderer] AutoScheduler 已启动',
+                autoList
+                    .map((b) => (typeof b === 'string' ? b : b.name))
+                    .join('/'),
                 `renderer=${pet.renderer || 'video'}`,
                 `pet=${pet.id}`,
             );
@@ -402,6 +413,19 @@ export function PetProvider({children}: PetProviderProps) {
         fsmRef,
         setFsmState,
         onEnterHungry: () => flashStatus('好饿…'),
+    });
+
+    // 系统 CPU/内存偏高 → work（咕嘎加班）；仅当宠物有 work clip 时启用
+    const systemWorkEnabled = useMemo(() => {
+        if (!pet?.clips) return false;
+        return !!pet.clips.work;
+    }, [pet]);
+
+    useSystemLoadWork({
+        fsmRef,
+        setFsmState,
+        enabled: systemWorkEnabled,
+        onEnterWork: () => flashStatus('加班中…'),
     });
 
     const onClipEnded = useCallback(() => {

@@ -49,6 +49,9 @@ const IPC = {
   WINDOW_DRAG_MOVE: 'window:drag-move',
   WINDOW_DRAG_END: 'window:drag-end',
 
+  /** 渲染 → 主进程：系统 CPU / 内存占用（0–100） */
+  SYSTEM_GET_LOAD: 'system:get-load',
+
   // —— 自动更新 ——
   UPDATE_GET_STATE: 'update:get-state',
   UPDATE_CHECK: 'update:check',

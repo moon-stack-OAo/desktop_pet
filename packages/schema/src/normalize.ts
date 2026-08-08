@@ -344,6 +344,10 @@ export function normalizePet(raw: RawPetConfig, fallbackId?: string): PetConfig 
   if (topBehavior) {
     config.behaviorMap = topBehavior;
   }
+  const autoBehaviors = normalizeAutoBehaviors(raw.autoBehaviors);
+  if (autoBehaviors) {
+    config.autoBehaviors = autoBehaviors;
+  }
   if (raw.audio && isRecord(raw.audio)) {
     config.audio = raw.audio as PetConfig['audio'];
   }
@@ -352,4 +356,35 @@ export function normalizePet(raw: RawPetConfig, fallbackId?: string): PetConfig 
   }
 
   return config;
+}
+
+/** 规范化 autoBehaviors 候选列表 */
+function normalizeAutoBehaviors(
+  input: unknown,
+): PetConfig['autoBehaviors'] | undefined {
+  if (!Array.isArray(input) || input.length === 0) return undefined;
+  /** @type {NonNullable<PetConfig['autoBehaviors']>} */
+  const out: NonNullable<PetConfig['autoBehaviors']> = [];
+  for (const item of input) {
+    if (typeof item === 'string') {
+      const name = item.trim();
+      if (name) out.push(name);
+      continue;
+    }
+    if (item && typeof item === 'object') {
+      const o = item as Record<string, unknown>;
+      const name = typeof o.name === 'string' ? o.name.trim() : '';
+      if (!name) continue;
+      /** @type {{ name: string; weight?: number; cooldownMs?: number }} */
+      const entry: { name: string; weight?: number; cooldownMs?: number } = {
+        name,
+      };
+      if (typeof o.weight === 'number' && o.weight > 0) entry.weight = o.weight;
+      if (typeof o.cooldownMs === 'number' && o.cooldownMs > 0) {
+        entry.cooldownMs = o.cooldownMs;
+      }
+      out.push(entry);
+    }
+  }
+  return out.length > 0 ? out : undefined;
 }

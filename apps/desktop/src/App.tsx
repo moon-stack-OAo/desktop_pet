@@ -12,7 +12,6 @@ import {useWindowDrag} from './hooks/useWindowDrag';
 import {PetProvider, usePetController} from './pet/PetContext';
 
 function PetApp() {
-  useWindowDrag();
   const {
     payload,
     status,
@@ -20,6 +19,7 @@ function PetApp() {
     currentClip,
     state,
     request,
+    playClip,
     onClipEnded,
     muted,
     toggleMuted,
@@ -28,6 +28,16 @@ function PetApp() {
     pat,
     playWith,
   } = usePetController();
+
+  // 拖动超过阈值 → grasp（仅拖动）；松手回 idle
+  useWindowDrag({
+    onDragStart: () => {
+      playClip('grasp', 'user:drag');
+    },
+    onDragEnd: () => {
+      request('idle', 'user:drag-end');
+    },
+  });
 
   // 同步主进程穿透状态（托盘/右键菜单切换时）
   useIgnoreMouse({ setStatus });

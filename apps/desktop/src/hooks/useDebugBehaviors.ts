@@ -4,7 +4,7 @@ import { debug as logDebug } from '../utils/log';
 
 /**
  * 键盘调试：数字键触发行为（验证 FSM / 多 clip）
- * 1 idle · 2 walk · 3 happy · 4 eat · 5 play · 6 sleep · 7 hungry
+ * 1 idle · 2 walk · 3 happy · 4 eat · 5 play · 6 sleep · 7 hungry · 8 hunt · 9 sick
  */
 export const KEY_BEHAVIORS: Record<string, string> = {
   '1': 'idle',
@@ -14,6 +14,8 @@ export const KEY_BEHAVIORS: Record<string, string> = {
   '5': 'play',
   '6': 'sleep',
   '7': 'hungry',
+  '8': 'hunt',
+  '9': 'sick',
 };
 
 export interface UseDebugBehaviorsOptions {

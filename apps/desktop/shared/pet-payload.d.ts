@@ -345,6 +345,15 @@ export interface PetAPI {
   moveWindowDrag: (screenX: number, screenY: number) => void;
   /** 拖动结束，清理主进程 drag 状态 */
   endWindowDrag: () => void;
+  /**
+   * 系统负载（CPU / 内存占用 0–100）
+   * ready=false 时 CPU 尚无差分基线
+   */
+  getSystemLoad: () => Promise<{
+    cpu: number;
+    memory: number;
+    ready: boolean;
+  }>;
 
   // —— 自动更新 ——
   getUpdateState: () => Promise<UpdateState>;

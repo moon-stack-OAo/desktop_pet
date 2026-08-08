@@ -9,6 +9,7 @@ const log = require('./logger');
 const { handleAiChat } = require('./ai-chat');
 const { loadAiSettings, saveAiSettings } = require('./ai-settings');
 const { popupPetContextMenu } = require('./tray-menu');
+const { getSystemLoad, warmSystemLoad } = require('./system-metrics');
 const { IPC } = require('../shared/ipc-channels');
 
 /**
@@ -48,6 +49,21 @@ function formatErr(err) {
  * @param {IpcHost} host
  */
 function registerIpc(host) {
+  try {
+    warmSystemLoad();
+  } catch {
+    /* ignore */
+  }
+
+  ipcMain.handle(IPC.SYSTEM_GET_LOAD, async () => {
+    try {
+      return getSystemLoad();
+    } catch (err) {
+      log.warn('[system] get-load 失败:', formatErr(err));
+      return { cpu: 0, memory: 0, ready: false };
+    }
+  });
+
   ipcMain.handle(IPC.PET_GET, async (_event, petId) => {
     return host.loadPetPayload(petId || host.getCurrentPetId() || 'guga');
   });

@@ -149,6 +149,13 @@ export interface PetConfig {
   spritesheet?: SpritesheetConfig;
   /** 顶层行为映射（video 型会从 video.behaviorMap 提升） */
   behaviorMap?: BehaviorMap;
+  /**
+   * 自主调度候选（可选）。string 等权；或 { name, weight?, cooldownMs? }
+   * 未设置时由应用侧使用 runtime 默认 walk/happy/play
+   */
+  autoBehaviors?: Array<
+    string | { name: string; weight?: number; cooldownMs?: number }
+  >;
   audio?: AudioConfig;
   ai?: AiConfig;
 }

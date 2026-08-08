@@ -3,7 +3,7 @@
   "name": "咕嘎",
   "version": "1.0.0",
   "greeting": "咕～我是咕嘎！",
-  "description": "暖黄圆滚的 chibi 视频桌宠，软萌贪吃，用 WebM 短动画陪在桌角。",
+  "description": "暖黄圆滚的 chibi 视频桌宠，软萌贪吃；系统忙时会自己加班（work）。",
   "colors": {
     "body": "#ffe082",
     "accent": "#ffb300",
@@ -120,8 +120,7 @@
       "play": [
         "dance",
         "spin",
-        "music",
-        "grasp"
+        "music"
       ],
       "sick": [
         "angry",
@@ -133,14 +132,23 @@
         "dance"
       ],
       "hunt": [
-        "walk",
         "work",
-        "walkout",
         "study",
-        "watch"
+        "watch",
+        "walkout",
+        "walk"
+      ],
+      "grasp": [
+        "grasp"
       ]
     }
   },
+  "autoBehaviors": [
+    { "name": "walk", "weight": 4, "cooldownMs": 12000 },
+    { "name": "happy", "weight": 2, "cooldownMs": 25000 },
+    { "name": "play", "weight": 2, "cooldownMs": 25000 },
+    { "name": "hunt", "weight": 2, "cooldownMs": 30000 }
+  ],
   "audio": {
     "mapFile": "audio.json",
     "dir": "audio"

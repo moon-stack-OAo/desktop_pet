@@ -33,6 +33,7 @@ const IPC = {
   WINDOW_DRAG_START: 'window:drag-start',
   WINDOW_DRAG_MOVE: 'window:drag-move',
   WINDOW_DRAG_END: 'window:drag-end',
+  SYSTEM_GET_LOAD: 'system:get-load',
   UPDATE_GET_STATE: 'update:get-state',
   UPDATE_CHECK: 'update:check',
   UPDATE_DOWNLOAD: 'update:download',
@@ -183,6 +184,12 @@ contextBridge.exposeInMainWorld('petAPI', {
   endWindowDrag: () => {
     ipcRenderer.send(IPC.WINDOW_DRAG_END);
   },
+
+  /**
+   * 系统负载（CPU / 内存占用 0–100）
+   * @returns {Promise<{ cpu: number; memory: number; ready: boolean }>}
+   */
+  getSystemLoad: () => ipcRenderer.invoke(IPC.SYSTEM_GET_LOAD),
 
   /** @param {() => void} callback */
   onOpenChat: (callback) => {

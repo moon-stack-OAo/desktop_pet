@@ -15,7 +15,8 @@
  */
 
 /**
- * 用户主动交互仅这 4 项；walk/sick/hunt 等由 AutoScheduler / 养成自动触发
+ * 用户主动交互菜单项。
+ * walk / hunt 也可由 AutoScheduler 触发；grasp 仅拖动触发，不进菜单。
  * @type {readonly BehaviorMenuItem[]}
  */
 const BEHAVIOR_MENU_ITEMS = Object.freeze([
@@ -23,6 +24,9 @@ const BEHAVIOR_MENU_ITEMS = Object.freeze([
   Object.freeze({ id: 'happy', label: '摸摸头', behaviorId: 'happy' }),
   Object.freeze({ id: 'play', label: '玩耍', behaviorId: 'play' }),
   Object.freeze({ id: 'sleep', label: '休息', behaviorId: 'sleep' }),
+  Object.freeze({ id: 'walk', label: '散步', behaviorId: 'walk' }),
+  Object.freeze({ id: 'hunt', label: '摸鱼', behaviorId: 'hunt' }),
+  Object.freeze({ id: 'sick', label: '生气', behaviorId: 'sick' }),
 ]);
 
 module.exports = {

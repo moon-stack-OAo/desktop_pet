@@ -16,6 +16,8 @@
 
 - 产品显示名统一为 **MoonPet**（`productName` / 托盘 / 窗口标题 / 安装包产物名）；仓库与 npm 包名仍为 `desktop_pet` / `@pet/*`
 - 重建 `icon.ico`：≤64 为 32bpp BMP、128/256 为 PNG-in-ICO，兼容 NSIS Setup 与高 DPI；脚本优先使用 `icon-*.png`
+- 咕嘎：`grasp` 仅拖动时播放；从 play 池移除；菜单增加散步/摸鱼/生气；自主调度含 hunt
+- 咕嘎：系统 CPU≥70% 或内存≥85% 时自动进入 `work`（加班），负载回落后恢复 idle
 
 ---
 
