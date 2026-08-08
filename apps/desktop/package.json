@@ -110,9 +110,13 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "afterPack": "./scripts/after-pack-win-icon.js",
     "publish": [
       {
         "provider": "github",
