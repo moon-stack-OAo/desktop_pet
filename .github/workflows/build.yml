@@ -135,7 +135,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop_pet-windows-${{ steps.ver.outputs.tag }}
+          name: MoonPet-windows-${{ steps.ver.outputs.tag }}
           path: |
             apps/desktop/release/*.exe
             apps/desktop/release/*.zip
@@ -158,7 +158,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: desktop_pet ${{ github.ref_name }}
+          name: MoonPet ${{ github.ref_name }}
           draft: false
           prerelease: ${{ contains(github.ref_name, '-') }}
           # 以 CHANGELOG 对应版本正文为主；并附带 GitHub 自动生成的提交摘要

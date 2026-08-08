@@ -33,7 +33,7 @@ const PERSISTENT_STATUS = new Set([
     '切换中…',
     '切换失败',
     '不支持切换宠物',
-    'desktop_pet React 渲染层（无 petAPI）',
+    'MoonPet React 渲染层（无 petAPI）',
 ]);
 
 /** 降级/拒载等动态文案：反馈定时器结束时勿清掉 */

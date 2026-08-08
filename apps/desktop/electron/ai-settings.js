@@ -93,7 +93,7 @@ function getDeps() {
   // 无 Electron：仅 env 可用；本地文件落到临时目录避免污染
   return {
     getPath: () =>
-      path.join(os.tmpdir(), `desktop_pet-${SETTINGS_FILE}`),
+      path.join(os.tmpdir(), `MoonPet-${SETTINGS_FILE}`),
     safeStorage: {
       isEncryptionAvailable: () => false,
       encryptString: () => {

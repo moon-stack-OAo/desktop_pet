@@ -1,5 +1,5 @@
 /**
- * desktop_pet 主进程：生命周期编排
+ * MoonPet 主进程：生命周期编排
  */
 
 'use strict';

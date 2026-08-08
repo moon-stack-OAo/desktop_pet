@@ -1,6 +1,6 @@
-# desktop_pet
+# MoonPet
 
-Windows 桌面宠物 monorepo：透明置顶小窗、拖拽、行为状态机（FSM）、精灵表 / 视频双渲染、本地养成、AI 对话、系统托盘与自动更新。
+Windows 桌面宠物（仓库：`desktop_pet`）：透明置顶小窗、拖拽、行为状态机（FSM）、精灵表 / 视频双渲染、本地养成、AI 对话、系统托盘与自动更新。
 
 当前版本 **0.1.0**（未打正式 TAG；变更见 [CHANGELOG.md](./CHANGELOG.md)）。
 

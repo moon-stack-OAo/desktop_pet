@@ -357,10 +357,10 @@ function applyWindowChrome(petPayload, host, tray) {
   } catch {
     mainWindow.setSize(w, h);
   }
-  const title = petPayload.displayName || petPayload.id || 'desktop_pet';
+  const title = petPayload.displayName || petPayload.id || 'MoonPet';
   mainWindow.setTitle(title);
   if (tray && !tray.isDestroyed()) {
-    tray.setToolTip(`desktop_pet · ${title}`);
+    tray.setToolTip(`MoonPet · ${title}`);
   }
 }
 
@@ -401,7 +401,7 @@ function createWindow(petPayload, host) {
     // 无边框窗禁用系统窗口菜单（右键标题区/拖拽区时的原生菜单）
     autoHideMenuBar: true,
     backgroundColor: solidBg ? '#ff69b4' : '#00000000',
-    title: petPayload.displayName || petPayload.id || 'desktop_pet',
+    title: petPayload.displayName || petPayload.id || 'MoonPet',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

@@ -20,7 +20,7 @@ exports.default = async function afterPackWinIcon(context) {
     (context.packager &&
       context.packager.appInfo &&
       context.packager.appInfo.productFilename) ||
-    'desktop_pet';
+    'MoonPet';
   const exePath = path.join(appOutDir, `${productFilename}.exe`);
   if (!fs.existsSync(exePath)) {
     console.warn('[after-pack-win-icon] exe not found:', exePath);

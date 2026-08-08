@@ -142,7 +142,7 @@ export function usePet(): UsePetResult {
 
   useEffect(() => {
     if (!window.petAPI) {
-      setStatus('desktop_pet React 渲染层（无 petAPI）');
+      setStatus('MoonPet React 渲染层（无 petAPI）');
       setLoadStatus('no-api');
       return;
     }

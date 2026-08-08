@@ -249,8 +249,8 @@ function rebuildTrayMenu(host) {
     tray.setContextMenu(Menu.buildFromTemplate(buildAppMenuTemplate(host)));
     const payload = host.getCurrentPayload();
     const name =
-      payload?.displayName || host.getCurrentPetId() || 'desktop_pet';
-    tray.setToolTip(`desktop_pet · ${name}`);
+      payload?.displayName || host.getCurrentPetId() || 'MoonPet';
+    tray.setToolTip(`MoonPet · ${name}`);
   } catch (err) {
     log.warn('[pet] 更新托盘菜单失败:', formatErr(err));
   }
@@ -307,7 +307,7 @@ function notifyIgnoreMouseIfNeeded(tray, ignoreMouse) {
     // Windows：气泡；其他平台仅 tooltip 已够
     if (process.platform === 'win32' && typeof tray.displayBalloon === 'function') {
       tray.displayBalloon({
-        title: 'desktop_pet',
+        title: 'MoonPet',
         content:
           '点击穿透已开启，窗口点不到。请右键本托盘图标，取消「点击穿透」。',
         iconType: 'info',
@@ -331,7 +331,7 @@ function createTray(host) {
     host.setTray(tray);
     const payload = host.getCurrentPayload();
     tray.setToolTip(
-      `desktop_pet · ${payload?.displayName || host.getCurrentPetId()}`,
+      `MoonPet · ${payload?.displayName || host.getCurrentPetId()}`,
     );
     tray.setContextMenu(Menu.buildFromTemplate(buildAppMenuTemplate(host)));
     tray.on('double-click', () => {
@@ -349,13 +349,13 @@ function createTray(host) {
         typeof tray.displayBalloon === 'function'
       ) {
         const name =
-          payload?.displayName || host.getCurrentPetId() || 'desktop_pet';
+          payload?.displayName || host.getCurrentPetId() || 'MoonPet';
         const multi =
           require('electron').screen.getAllDisplays().length > 1
             ? '多屏时在光标所在屏右下角；'
             : '在当前屏右下角；';
         tray.displayBalloon({
-          title: 'desktop_pet 已启动',
+          title: 'MoonPet 已启动',
           content: `当前：${name}。${multi}看不到请点本图标（会拉回当前屏），或右键「显示/隐藏」。`,
           iconType: 'info',
         });

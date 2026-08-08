@@ -1,6 +1,6 @@
 # @pet/desktop
 
-Electron + Vite + React **desktop_pet**：透明置顶窗、行为状态机、视频/精灵表双渲染、右键与托盘菜单、切换宠物。
+Electron + Vite + React **MoonPet**（包名 `@pet/desktop`）：透明置顶窗、行为状态机、视频/精灵表双渲染、右键与托盘菜单、切换宠物。
 
 ## 项目简介
 
@@ -378,9 +378,9 @@ npm run desktop:dist
 
 ```
 apps/desktop/release/
-├── desktop_pet-Setup-x.x.x.exe       # NSIS 安装包（dist）
-├── desktop_pet-x.x.x-win-x64.zip     # zip 解压版（dist，解压即用）
-└── win-unpacked/                     # pack / dist 的解包目录，可直接运行 desktop_pet.exe
+├── MoonPet-Setup-x.x.x.exe           # NSIS 安装包（dist）
+├── MoonPet-x.x.x-win-x64.zip         # zip 解压版（dist，解压即用）
+└── win-unpacked/                     # pack / dist 的解包目录，可直接运行 MoonPet.exe
 ```
 
 ### 打包路径说明
@@ -401,7 +401,7 @@ apps/desktop/release/
    ```powershell
    $env:PET_ID="doro"
    $env:PET_AI_API_KEY="sk-..."
-   & ".\apps\desktop\release\win-unpacked\desktop_pet.exe"
+    & ".\apps\desktop\release\win-unpacked\MoonPet.exe"
    ```
 2. 系统/用户环境变量中设置 `PET_ID`、`PET_AI_API_KEY`、`PET_AI_BASE_URL`、`PET_AI_MODEL` 后，从开始菜单或快捷方式启动也会生效。
 3. 无 API Key 时 AI 仍走本地关键词降级；宠物选择仍可读 `userData/desktop-prefs.json` 的 `pet` 分区（`PET_ID` 优先）。
@@ -464,7 +464,7 @@ apps/desktop/release/
 
 ### Electron userData 文件
 
-路径：`app.getPath('userData')` 下（Windows 常见为 `%APPDATA%/desktop_pet/`，以实际 `productName` / `name` 为准）。
+路径：`app.getPath('userData')` 下（Windows 常见为 `%APPDATA%/MoonPet/`，以实际 `productName` 为准）。
 
 | 文件 | 说明 |
 |------|------|

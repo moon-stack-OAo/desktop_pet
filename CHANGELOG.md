@@ -12,7 +12,9 @@
 
 ## [Unreleased]
 
-（暂无）
+### 变更
+
+- 产品显示名统一为 **MoonPet**（`productName` / 托盘 / 窗口标题 / 安装包产物名）；仓库与 npm 包名仍为 `desktop_pet` / `@pet/*`
 
 ---
 
@@ -73,7 +75,7 @@
 - Electron ^33、Vite 5、React 18、TypeScript；npm workspaces
 - `@pet/schema`：pet.json 类型 / 校验 / 加载
 - `@pet/runtime`：纯 TS 行为 FSM + AutoScheduler
-- 打包：electron-builder → NSIS（`desktop_pet-Setup-0.1.0.exe`）+ zip（`desktop_pet-0.1.0-win-x64.zip`）；当前未代码签名（不发布 portable）
+- 打包：electron-builder → NSIS（`MoonPet-Setup-0.1.0.exe`）+ zip（`MoonPet-0.1.0-win-x64.zip`）；当前未代码签名（不发布 portable）
 
 ### 已知限制
 

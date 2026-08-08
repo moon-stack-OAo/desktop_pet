@@ -108,7 +108,7 @@ function main() {
       `warn: no ## [${version}] section in ${changelogPath}; writing fallback notes`,
     );
     body = [
-      `## desktop_pet v${version}`,
+      `## MoonPet v${version}`,
       '',
       `未在 CHANGELOG.md 中找到 \`## [${version}]\` 段落。`,
       '请查看 GitHub 自动生成的提交摘要与仓库 CHANGELOG。',

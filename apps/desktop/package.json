@@ -2,7 +2,7 @@
   "name": "@pet/desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "desktop_pet Electron 应用（透明窗 + 宠物资源）",
+  "description": "MoonPet — 桌面宠物 Electron 应用（透明窗 + 宠物资源）",
   "author": "Moon",
   "main": "electron/main.js",
   "scripts": {
@@ -42,7 +42,7 @@
   },
   "build": {
     "appId": "com.moon.pet.desktop",
-    "productName": "desktop_pet",
+    "productName": "MoonPet",
     "electronVersion": "33.4.11",
     "icon": "build/icon.ico",
     "directories": {
@@ -105,7 +105,7 @@
       ],
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
-      "executableName": "desktop_pet"
+      "executableName": "MoonPet"
     },
     "nsis": {
       "oneClick": false,

@@ -106,7 +106,7 @@ function createToolWindow() {
     autoHideMenuBar: true,
     hasShadow: true,
     backgroundColor: '#12141c',
-    title: 'desktop_pet · AI',
+    title: 'MoonPet · AI',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
